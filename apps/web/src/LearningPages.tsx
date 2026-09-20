@@ -14,7 +14,7 @@ import {
   TriangleAlert,
   XCircle,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { api } from "./api";
 import { robotAssets } from "./robot";
@@ -22,6 +22,58 @@ import type { CourseLessons, Lesson, Quiz, QuizAnswer, QuizResult } from "./type
 
 function isAbortError(reason: unknown) {
   return reason instanceof DOMException && reason.name === "AbortError";
+}
+
+function InlineLessonMarkdown({ text }: { text: string }) {
+  return <>{text.split(/(\*\*[^*]+\*\*)/g).map((part, index) => (
+    part.startsWith("**") && part.endsWith("**")
+      ? <strong key={index}>{part.slice(2, -2)}</strong>
+      : part
+  ))}</>;
+}
+
+function LessonMarkdown({ body }: { body: string }) {
+  const lines = body.split("\n");
+  const content: ReactNode[] = [];
+  let index = 0;
+
+  const isListLine = (line: string) => /^[-*]\s+/.test(line) || /^\d+\.\s+/.test(line);
+  while (index < lines.length) {
+    if (!lines[index]?.trim()) { index += 1; continue; }
+    if (lines[index]!.startsWith("```")) {
+      index += 1;
+      const code: string[] = [];
+      while (index < lines.length && !lines[index]!.startsWith("```")) code.push(lines[index++]!);
+      index += 1;
+      content.push(<pre key={content.length}>{code.join("\n")}</pre>);
+      continue;
+    }
+    if (lines[index]!.startsWith("> ")) {
+      const quote: string[] = [];
+      while (index < lines.length && lines[index]!.startsWith("> ")) quote.push(lines[index++]!.slice(2));
+      content.push(<blockquote key={content.length}><InlineLessonMarkdown text={quote.join("\n")} /></blockquote>);
+      continue;
+    }
+    if (isListLine(lines[index]!)) {
+      const ordered = /^\d+\.\s+/.test(lines[index]!);
+      const items: string[] = [];
+      while (index < lines.length) {
+        const line = lines[index]!;
+        if (!line.trim()) { index += 1; continue; }
+        const match = line.match(ordered ? /^\d+\.\s+(.+)$/ : /^[-*]\s+(.+)$/);
+        if (!match) break;
+        items.push(match[1]!);
+        index += 1;
+      }
+      const Tag = ordered ? "ol" : "ul";
+      content.push(<Tag key={content.length}>{items.map((item, itemIndex) => <li key={itemIndex}><InlineLessonMarkdown text={item} /></li>)}</Tag>);
+      continue;
+    }
+    const paragraph: string[] = [];
+    while (index < lines.length && lines[index]!.trim() && !lines[index]!.startsWith("```") && !lines[index]!.startsWith("> ") && !isListLine(lines[index]!)) paragraph.push(lines[index++]!);
+    content.push(<p key={content.length}><InlineLessonMarkdown text={paragraph.join("\n")} /></p>);
+  }
+  return <div className="lesson-page-card__body">{content}</div>;
 }
 
 function FlowTopBar({ title, onBack }: { title: string; onBack: () => void }) {
@@ -163,7 +215,7 @@ export function LessonPage() {
                   {page.illustration.caption && <figcaption>{page.illustration.caption}</figcaption>}
                 </figure>
               )}
-              <p>{page.body}</p>
+              <LessonMarkdown body={page.body} />
             </article>
           ) : (
             <article className="lesson-checkpoint">

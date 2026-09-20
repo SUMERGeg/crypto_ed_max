@@ -267,6 +267,13 @@ a { color: inherit; text-decoration: none; }
 .lesson-page-card__illustration img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; }
 .lesson-page-card__illustration figcaption { padding: 9px 11px 10px; color: #68758a; font-size: 10px; line-height: 1.45; background: rgba(255,255,255,.78); }
 .lesson-page-card p { margin: 0; color: #505c70; font-size: 11px; line-height: 1.78; white-space: pre-line; }
+.lesson-page-card__body { color: #505c70; font-size: 11px; line-height: 1.78; }
+.lesson-page-card__body p + p { margin-top: 13px; }
+.lesson-page-card__body strong { color: #25344b; font-weight: 800; }
+.lesson-page-card__body ul,.lesson-page-card__body ol { margin: 12px 0; padding-left: 20px; }
+.lesson-page-card__body li + li { margin-top: 6px; }
+.lesson-page-card__body blockquote { margin: 13px 0; padding: 9px 12px; color: #344f79; font-weight: 700; border-left: 3px solid #7063e8; border-radius: 0 10px 10px 0; background: #f1f0ff; white-space: pre-line; }
+.lesson-page-card__body pre { margin: 13px 0; padding: 11px; overflow-x: auto; color: #354257; font: 11px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; border-radius: 10px; background: #edf1f7; white-space: pre-wrap; }
 .lesson-page-card--bullets { border-color: #d6e7f7; background: linear-gradient(145deg,#fff,#f1f8ff); }.lesson-page-card--bullets .lesson-page-card__icon { color: #247fcf; background: #dceeff; }
 .lesson-page-card--example { border-color: #dddafb; background: linear-gradient(145deg,#fff,#f2f1ff); }
 .lesson-page-card--risk { border-color: #f0d7c5; background: linear-gradient(145deg,#fff,#fff5ed); }.lesson-page-card--risk .lesson-page-card__icon { color: #d77732; background: #ffead9; }
@@ -543,6 +550,7 @@ a { color: inherit; text-decoration: none; }
 :root[data-theme="dark"] .info-card p,
 :root[data-theme="dark"] .lesson-row__copy small,
 :root[data-theme="dark"] .lesson-page-card p,
+:root[data-theme="dark"] .lesson-page-card__body,
 :root[data-theme="dark"] .result-review article p,
 :root[data-theme="dark"] .scenario-card p,
 :root[data-theme="dark"] .intro-facts small,
@@ -617,6 +625,9 @@ a { color: inherit; text-decoration: none; }
 :root[data-theme="dark"] .profile-empty { color: var(--text-primary); border-color: var(--border-color); background: var(--card-background); box-shadow: 0 7px 20px var(--shadow-color); }
 :root[data-theme="dark"] .lesson-page-card__illustration { border-color: #2c3b56; background: #111d32; box-shadow: 0 9px 24px rgba(0,0,0,.22); }
 :root[data-theme="dark"] .lesson-page-card__illustration figcaption { color: #aebbd0; background: #152238; }
+:root[data-theme="dark"] .lesson-page-card__body strong { color: #f3f7ff; }
+:root[data-theme="dark"] .lesson-page-card__body blockquote { color: #cfd9ff; background: #202a4b; }
+:root[data-theme="dark"] .lesson-page-card__body pre { color: #d8e0ef; background: #121e32; }
 
 :root[data-theme="dark"] .lesson-section--example,
 :root[data-theme="dark"] .lesson-page-card--example,
