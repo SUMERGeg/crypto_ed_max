@@ -1,0 +1,666 @@
+openapi: 3.0.3
+info:
+  title: Crypto Education MVP API
+  version: 0.1.0
+  description: Internal REST API for the MAX Crypto Education mini-app MVP.
+servers:
+  - url: /api/v1
+
+tags:
+  - name: Auth
+  - name: Home
+  - name: Learning
+  - name: Quiz
+  - name: Simulation
+  - name: Security
+  - name: Market
+  - name: News
+  - name: Profile
+
+paths:
+  /auth/max:
+    post:
+      tags: [Auth]
+      summary: Validate MAX launch data and create/get user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [initData]
+              properties:
+                initData: { type: string }
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '401': { description: Invalid MAX launch data }
+
+  /home:
+    get:
+      tags: [Home]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Home dashboard
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HomeResponse' }
+
+  /courses:
+    get:
+      tags: [Learning]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Published courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CourseSummary' }
+
+  /courses/{courseId}/lessons:
+    get:
+      tags: [Learning]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: courseId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Course lessons
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/LessonSummary' }
+
+  /lessons/{lessonId}:
+    get:
+      tags: [Learning]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: lessonId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Lesson content
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Lesson' }
+
+  /lessons/{lessonId}/open:
+    post:
+      tags: [Learning]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: lessonId, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Last opened lesson updated }
+
+  /lessons/{lessonId}/quiz:
+    get:
+      tags: [Quiz]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: lessonId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Quiz without correct-answer flags
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QuizPublic' }
+
+  /quizzes/{quizId}/submit:
+    post:
+      tags: [Quiz]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: quizId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/QuizSubmitRequest' }
+      responses:
+        '200':
+          description: Result and updated progress
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QuizResult' }
+
+  /scenarios:
+    get:
+      tags: [Simulation]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Published scenarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ScenarioSummary' }
+
+  /simulations:
+    post:
+      tags: [Simulation]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scenarioId]
+              properties:
+                scenarioId: { type: string }
+      responses:
+        '201':
+          description: Simulation started
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SimulationState' }
+
+  /simulations/{sessionId}/state:
+    get:
+      tags: [Simulation]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: sessionId, in: path, required: true, schema: { type: string } }
+        - { name: scenarioAt, in: query, required: true, schema: { type: string, format: date-time } }
+      responses:
+        '200':
+          description: Safe historical state; never includes future data
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SimulationState' }
+        '403': { description: Session does not belong to current user }
+
+  /simulations/{sessionId}/trades:
+    post:
+      tags: [Simulation]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: sessionId, in: path, required: true, schema: { type: string } }
+        - { name: Idempotency-Key, in: header, required: false, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TradeRequest' }
+      responses:
+        '200':
+          description: Updated simulation state
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SimulationState' }
+        '400': { description: Invalid balance, quantity, asset or timestamp }
+        '403': { description: Forbidden }
+
+  /simulations/{sessionId}/complete:
+    post:
+      tags: [Simulation]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: sessionId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Final result, benchmark and deterministic analysis
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SimulationResult' }
+
+  /security/cases:
+    get:
+      tags: [Security]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Security cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/SecurityCaseSummary' }
+
+  /security/cases/{caseId}:
+    get:
+      tags: [Security]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: caseId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Security case
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SecurityCase' }
+
+  /security/cases/{caseId}/submit:
+    post:
+      tags: [Security]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: caseId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [optionId]
+              properties:
+                optionId: { type: string }
+      responses:
+        '200':
+          description: Educational feedback
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SecurityCaseResult' }
+
+  /market/assets:
+    get:
+      tags: [Market]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Configured current market assets
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MarketAssetList' }
+
+  /market/assets/{symbol}:
+    get:
+      tags: [Market]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: symbol, in: path, required: true, schema: { type: string } }
+        - name: period
+          in: query
+          required: false
+          schema: { type: string, enum: [1D, 1W, 1M, 3M, 1Y] }
+      responses:
+        '200':
+          description: Current asset detail/chart
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MarketAssetDetail' }
+
+  /news:
+    get:
+      tags: [News]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Published news
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/NewsSummary' }
+
+  /news/{newsId}:
+    get:
+      tags: [News]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: newsId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: News article
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NewsArticle' }
+
+  /profile:
+    get:
+      tags: [Profile]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Current user profile/progress
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Profile' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        accessToken: { type: string }
+        user: { $ref: '#/components/schemas/User' }
+
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        displayName: { type: string, nullable: true }
+        avatarUrl: { type: string, nullable: true }
+
+    ProgressSummary:
+      type: object
+      properties:
+        completedLessons: { type: integer }
+        totalLessons: { type: integer }
+        percent: { type: number }
+
+    CourseSummary:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        shortDescription: { type: string }
+        progress: { $ref: '#/components/schemas/ProgressSummary' }
+
+    LessonSummary:
+      type: object
+      properties:
+        id: { type: string }
+        courseId: { type: string }
+        title: { type: string }
+        durationMinutes: { type: integer }
+        pageCount: { type: integer }
+        status: { type: string, enum: [NOT_STARTED, OPENED, COMPLETED] }
+
+    Lesson:
+      allOf:
+        - { $ref: '#/components/schemas/LessonSummary' }
+        - type: object
+          properties:
+            shortDescription: { type: string }
+            sections:
+              type: array
+              items:
+                type: object
+                properties:
+                  type: { type: string }
+                  title: { type: string, nullable: true }
+                  body: { type: string, nullable: true }
+                  assetUrl: { type: string, nullable: true }
+            pages:
+              type: array
+              description: Последовательность смысловых страниц и промежуточных проверок
+              items:
+                type: object
+                properties:
+                  id: { type: string }
+                  kind: { type: string, enum: [CONTENT, CHECKPOINT] }
+                  eyebrow: { type: string }
+                  title: { type: string }
+            robotTip: { type: string, nullable: true }
+
+    QuizPublic:
+      type: object
+      properties:
+        id: { type: string }
+        lessonId: { type: string }
+        questions:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              text: { type: string }
+              type: { type: string, enum: [SINGLE_CHOICE, MULTIPLE_CHOICE] }
+              options:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: string }
+                    text: { type: string }
+
+    QuizSubmitRequest:
+      type: object
+      required: [answers]
+      properties:
+        answers:
+          type: array
+          items:
+            type: object
+            required: [questionId, optionIds]
+            properties:
+              questionId: { type: string }
+              optionIds:
+                type: array
+                items: { type: string }
+
+    QuizResult:
+      type: object
+      properties:
+        correctAnswers: { type: integer }
+        totalQuestions: { type: integer }
+        scorePercent: { type: number }
+        passed: { type: boolean }
+        passingScorePercent: { type: number, example: 67 }
+        completedLesson: { type: boolean }
+        courseProgress: { $ref: '#/components/schemas/ProgressSummary' }
+
+    ScenarioSummary:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        version: { type: string }
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        estimatedMinutes: { type: integer }
+        difficulty: { type: string, enum: [BEGINNER, INTERMEDIATE, ADVANCED] }
+        startingBalanceRub: { type: number }
+        eventCount: { type: integer }
+        educationalFocus:
+          type: array
+          items: { type: string }
+        benchmark:
+          type: object
+          properties:
+            kind: { type: string, enum: [BUY_AND_HOLD] }
+            assetSymbol: { type: string }
+            label: { type: string }
+        assetSymbols:
+          type: array
+          items: { type: string }
+
+    Position:
+      type: object
+      properties:
+        symbol: { type: string }
+        quantity: { type: number }
+        currentPriceRub: { type: number }
+        currentValueRub: { type: number }
+
+    ScenarioEvent:
+      type: object
+      properties:
+        id: { type: string }
+        at: { type: string, format: date-time }
+        title: { type: string }
+        summary: { type: string }
+        context: { type: string }
+        category: { type: string, enum: [MARKET, WORLD, REGULATION, TECHNOLOGY, SECURITY, COMPANY] }
+        affectedAssets:
+          type: array
+          items: { type: string }
+        sourceName: { type: string }
+        sourceUrl: { type: string }
+
+    PricePoint:
+      type: object
+      properties:
+        timestamp: { type: string, format: date-time }
+        priceRub: { type: number }
+
+    SimulationState:
+      type: object
+      properties:
+        sessionId: { type: string }
+        scenarioId: { type: string }
+        status: { type: string, enum: [ACTIVE, PAUSED, COMPLETED, INTERRUPTED] }
+        scenarioAt: { type: string, format: date-time }
+        cashBalanceRub: { type: number }
+        portfolioValueRub: { type: number }
+        positions:
+          type: array
+          items: { $ref: '#/components/schemas/Position' }
+        events:
+          type: array
+          description: Только события с at не позже текущего scenarioAt
+          items: { $ref: '#/components/schemas/ScenarioEvent' }
+        series:
+          type: object
+          additionalProperties:
+            type: array
+            items: { $ref: '#/components/schemas/PricePoint' }
+
+    TradeRequest:
+      type: object
+      required: [type, symbol, scenarioAt]
+      properties:
+        type: { type: string, enum: [BUY, SELL] }
+        symbol: { type: string }
+        amountRub: { type: number, nullable: true }
+        quantity: { type: number, nullable: true }
+        scenarioAt: { type: string, format: date-time }
+        triggerEventId: { type: string, nullable: true }
+      description: BUY uses amountRub; SELL uses quantity.
+
+    SimulationResult:
+      type: object
+      properties:
+        sessionId: { type: string }
+        finalValueRub: { type: number }
+        returnPercent: { type: number }
+        benchmarkReturnPercent: { type: number }
+        benchmarkLabel: { type: string }
+        deltaToBenchmarkPp: { type: number }
+        analysis:
+          type: array
+          items:
+            type: object
+            properties:
+              code: { type: string }
+              title: { type: string }
+              text: { type: string }
+
+    SecurityCaseSummary:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        shortDescription: { type: string }
+        completed: { type: boolean }
+
+    SecurityCase:
+      allOf:
+        - { $ref: '#/components/schemas/SecurityCaseSummary' }
+        - type: object
+          properties:
+            scenarioText: { type: string }
+            context: { type: string, nullable: true }
+            options:
+              type: array
+              items:
+                type: object
+                properties:
+                  id: { type: string }
+                  text: { type: string }
+
+    SecurityCaseResult:
+      type: object
+      properties:
+        safetyLevel: { type: string, enum: [SAFE, RISKY] }
+        feedback: { type: string }
+        consequences: { type: string, nullable: true }
+        redFlags:
+          type: array
+          items: { type: string }
+        takeaway: { type: string }
+
+    MarketAsset:
+      type: object
+      properties:
+        symbol: { type: string }
+        name: { type: string }
+        priceRub: { type: number }
+        change24hPercent: { type: number }
+        sourceTimestamp: { type: string, format: date-time }
+        isStale: { type: boolean }
+
+    MarketAssetList:
+      type: object
+      properties:
+        assets:
+          type: array
+          items: { $ref: '#/components/schemas/MarketAsset' }
+        isStale: { type: boolean }
+        source: { type: string }
+
+    MarketAssetDetail:
+      allOf:
+        - { $ref: '#/components/schemas/MarketAsset' }
+        - type: object
+          properties:
+            period: { type: string }
+            series:
+              type: array
+              items: { $ref: '#/components/schemas/PricePoint' }
+
+    NewsSummary:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        preview: { type: string }
+        category: { type: string }
+        publishedAt: { type: string, format: date-time }
+
+    NewsArticle:
+      allOf:
+        - { $ref: '#/components/schemas/NewsSummary' }
+        - type: object
+          properties:
+            whatHappened: { type: string }
+            whyImportant: { type: string }
+            analysis: { type: string }
+            takeaway: { type: string }
+            sourceName: { type: string }
+            sourceUrl: { type: string }
+            disclaimer: { type: string }
+
+    HomeResponse:
+      type: object
+      properties:
+        continueLesson: { $ref: '#/components/schemas/LessonSummary' }
+        overallProgress: { $ref: '#/components/schemas/ProgressSummary' }
+        market: { $ref: '#/components/schemas/MarketAssetList' }
+        latestNews: { $ref: '#/components/schemas/NewsSummary' }
+
+    Profile:
+      type: object
+      properties:
+        user: { $ref: '#/components/schemas/User' }
+        overallProgress: { $ref: '#/components/schemas/ProgressSummary' }
+        courses:
+          type: array
+          items: { $ref: '#/components/schemas/CourseSummary' }
+        completedSecurityCases: { type: integer }
+        completedSimulations:
+          type: array
+          items:
+            type: object
+            properties:
+              sessionId: { type: string }
+              scenarioId: { type: string }
+              returnPercent: { type: number }
+              completedAt: { type: string, format: date-time }

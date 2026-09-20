@@ -1,0 +1,20 @@
+{
+  "name": "crypto-education",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,magenta \"npm run dev --workspace @crypto-education/api\" \"npm run dev --workspace @crypto-education/web\"",
+    "dev:api": "npm run dev --workspace @crypto-education/api",
+    "dev:web": "npm run dev --workspace @crypto-education/web",
+    "build": "npm run build --workspace @crypto-education/api && npm run build --workspace @crypto-education/web",
+    "start": "npm run start --workspace @crypto-education/api",
+    "typecheck": "npm run typecheck --workspace @crypto-education/api && npm run typecheck --workspace @crypto-education/web",
+    "smoke:replay-result": "npm run build --workspace @crypto-education/api && node scripts/smoke-replay-result.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

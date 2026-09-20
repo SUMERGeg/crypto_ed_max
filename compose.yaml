@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: crypto_education
+      POSTGRES_USER: crypto
+      POSTGRES_PASSWORD: crypto_dev_only
+    ports:
+      - "5433:5432"
+    volumes:
+      - crypto_education_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crypto -d crypto_education"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  crypto_education_pgdata:
