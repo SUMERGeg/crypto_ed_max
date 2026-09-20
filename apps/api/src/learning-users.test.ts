@@ -33,3 +33,16 @@ test("MAX learners see their own names and lesson progress", async () => {
   assert.equal((await getLesson("crypto-intro", anna))?.status, "OPENED");
   assert.equal((await getLesson("crypto-intro", boris))?.status, "NOT_STARTED");
 });
+
+test("finance lessons have six illustrated theory pages and no intermediate checks", async () => {
+  await initializeLearningState(new TestProgressRepository());
+  const learner = { id: "max:finance", displayName: "Ирина" };
+
+  for (const lessonId of ["finance-risk-return", "finance-diversification", "finance-volatility", "finance-cap-fees", "finance-risk-plan"]) {
+    const lesson = await getLesson(lessonId, learner);
+    assert.ok(lesson);
+    assert.equal(lesson.pages.length, 6);
+    assert.ok(lesson.pages.every((page) => page.kind === "CONTENT"));
+    assert.ok(lesson.pages.every((page) => page.kind === "CONTENT" && page.illustration?.src.startsWith("/assets/lessons/financial-basics/")));
+  }
+});

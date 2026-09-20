@@ -1,4 +1,5 @@
 import { cryptoLessonSpecs, type CryptoLessonPageSpec, type CryptoLessonSpec } from "./crypto-lessons.js";
+import { financeLessonSpecs, type FinanceLessonSpec } from "./finance-lessons.js";
 import { digitalRubleLessonSpec } from "./law-lessons.js";
 
 type LessonStatus = "NOT_STARTED" | "OPENED" | "COMPLETED";
@@ -135,6 +136,22 @@ function expandedLawLesson(spec: CryptoLessonSpec): LessonRecord {
   };
 }
 
+function expandedFinanceLesson(spec: FinanceLessonSpec): LessonRecord {
+  const questions = spec.questions.map((item) => question(item.id, item.text, item.correct, item.wrong, item.explanation));
+  return {
+    id: spec.id,
+    courseId: "finance",
+    order: spec.order,
+    title: spec.title,
+    shortDescription: spec.shortDescription,
+    durationMinutes: spec.durationMinutes,
+    robotTip: spec.robotTip,
+    sections: spec.pages.map((page) => ({ type: page.sectionType, title: page.title, body: page.body })),
+    detailedPages: spec.pages,
+    quiz: { id: `quiz-${spec.id}`, title: `Итоговый тест: ${spec.title}`, questions },
+  };
+}
+
 const depthNotes: Record<string, string> = {
   "crypto-intro": "Важно отличать сам актив от способа доступа к нему. В телефоне лежит не монета, а программа-кошелёк и данные, с помощью которых владелец подтверждает действия. Если телефон сломался, актив не исчезает из общей истории. Но потеря секретных данных доступа может лишить человека возможности им распоряжаться. Сеть проверяет право создать перевод, но не знает, ошибся ли человек адресом.",
   "crypto-bitcoin": "Новые BTC появляются по заранее заданным правилам и постепенно всё медленнее. Это позволяет заранее оценить максимальное предложение, но не количество монет, доступных для покупки сегодня: часть могла быть потеряна или долго не двигаться. Перевод также не становится мгновенно окончательным — обычно ждут несколько подтверждений, потому что каждый следующий блок усиливает уверенность в записи.",
@@ -175,11 +192,11 @@ function learningPages(item: LessonRecord): LessonPage[] {
     },
   });
 
-  if (item.detailedPages && item.checkpointAfter) {
-    const checkpointByPage = new Map<number, LessonCheckpointPage>([
+  if (item.detailedPages) {
+    const checkpointByPage = item.checkpointAfter ? new Map<number, LessonCheckpointPage>([
       [item.checkpointAfter[0], checkpoint(firstCheck, 1)],
       [item.checkpointAfter[1], checkpoint(secondCheck, 2)],
-    ]);
+    ]) : new Map<number, LessonCheckpointPage>();
     return item.detailedPages.flatMap((page, index) => {
       const pageNumber = index + 1;
       const contentPage: LessonContentPage = {
@@ -486,8 +503,9 @@ const legacyLessons: LessonRecord[] = [
 
 export const lessons: LessonRecord[] = [
   ...cryptoLessonSpecs.map(expandedCryptoLesson),
+  ...financeLessonSpecs.map(expandedFinanceLesson),
   ...legacyLessons
-    .filter((item) => item.courseId !== "crypto-basics")
+    .filter((item) => item.courseId !== "crypto-basics" && item.courseId !== "finance")
     .map((item) => item.id === digitalRubleLessonSpec.id ? expandedLawLesson(digitalRubleLessonSpec) : item),
 ];
 
