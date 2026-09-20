@@ -59,6 +59,8 @@ async function fetchJson<T>(url: string, timeoutMs = 7_000): Promise<T> {
   }
 }
 
+type JsonFetcher = <T>(url: string, timeoutMs?: number) => Promise<T>;
+
 function fallbackSparkline(price: number, seed: number) {
   const shape = [0.97, 0.985, 0.978, 1.004, 0.994, 1.012, 1.006, 1.023, 1.016, 1.031, 1.018, 1.04];
   return shape.map((factor, index) => Math.round(price * (factor + Math.sin(index + seed) * 0.006) * 100) / 100);
@@ -93,45 +95,94 @@ function staleCopy(value: MarketAssetList): MarketAssetList {
   };
 }
 
+async function loadCoinGeckoMarket(request: JsonFetcher): Promise<MarketAssetList> {
+  type CoinGeckoMarket = {
+    id: string;
+    current_price: number;
+    price_change_percentage_24h: number | null;
+    last_updated: string;
+    sparkline_in_7d?: { price?: number[] };
+  };
+  const ids = assets.map((item) => item.coinGeckoId).join(",");
+  const rows = await request<CoinGeckoMarket[]>(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=rub&ids=${ids}&sparkline=true&price_change_percentage=24h`);
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  const liveAssets = assets.map((item) => {
+    const row = byId.get(item.coinGeckoId);
+    if (!row || !Number.isFinite(row.current_price)) throw new Error(`Missing ${item.symbol}`);
+    const rawSparkline = row.sparkline_in_7d?.price?.filter(Number.isFinite) ?? [];
+    const lastSparklinePrice = rawSparkline.at(-1);
+    const sparklineScale = lastSparklinePrice && lastSparklinePrice > 0 ? row.current_price / lastSparklinePrice : 1;
+    const step = Math.max(1, Math.floor(rawSparkline.length / 24));
+    return {
+      symbol: item.symbol,
+      name: item.name,
+      priceRub: row.current_price,
+      change24hPercent: row.price_change_percentage_24h ?? 0,
+      sourceTimestamp: row.last_updated,
+      isStale: false,
+      sparklineRub: rawSparkline.filter((_value, index) => index % step === 0).slice(-24).map((price) => price * sparklineScale),
+      accent: item.accent,
+    };
+  });
+  const updatedAt = liveAssets.map((item) => item.sourceTimestamp).sort().at(-1) ?? new Date().toISOString();
+  return { assets: liveAssets, isStale: false, source: "CoinGecko", sourceUrl: "https://docs.coingecko.com/reference/coins-markets", updatedAt };
+}
+
+async function loadExchangeMarket(request: JsonFetcher, provider: "Binance" | "OKX"): Promise<MarketAssetList> {
+  type RubRate = { Valute?: { USD?: { Value?: number } } };
+  const rubRate = await request<RubRate>("https://www.cbr-xml-daily.ru/daily_json.js", 3_000);
+  const usdRub = rubRate.Valute?.USD?.Value;
+  if (!Number.isFinite(usdRub) || !usdRub || usdRub <= 0) throw new Error("USD/RUB is unavailable");
+  const rows = await Promise.all(assets.map(async (asset) => {
+    if (provider === "Binance") {
+      const quote = await request<{ lastPrice?: string; priceChangePercent?: string }>(`https://data-api.binance.vision/api/v3/ticker/24hr?symbol=${asset.binanceSymbol}`, 3_000);
+      return { asset, priceUsd: Number(quote.lastPrice), change24hPercent: Number(quote.priceChangePercent), updatedAt: new Date().toISOString() };
+    }
+    const quote = await request<{ data?: Array<{ last?: string; sodUtc8?: string; ts?: string }> }>(`https://www.okx.com/api/v5/market/ticker?instId=${asset.okxSymbol}`, 3_000);
+    const item = quote.data?.[0];
+    const priceUsd = Number(item?.last);
+    const dayStart = Number(item?.sodUtc8);
+    const change24hPercent = Number.isFinite(dayStart) && dayStart > 0 ? ((priceUsd / dayStart) - 1) * 100 : 0;
+    return { asset, priceUsd, change24hPercent, updatedAt: item?.ts ? new Date(Number(item.ts)).toISOString() : new Date().toISOString() };
+  }));
+  if (rows.some((row) => !Number.isFinite(row.priceUsd) || row.priceUsd <= 0)) throw new Error(`${provider} quote unavailable`);
+  const liveAssets = rows.map(({ asset, priceUsd, change24hPercent, updatedAt }) => ({
+    symbol: asset.symbol,
+    name: asset.name,
+    priceRub: Math.round(priceUsd * usdRub * 100) / 100,
+    change24hPercent: Number.isFinite(change24hPercent) ? change24hPercent : 0,
+    sourceTimestamp: updatedAt,
+    isStale: false,
+    sparklineRub: fallbackSparkline(priceUsd * usdRub, asset.symbol.length),
+    accent: asset.accent,
+  }));
+  const updatedAt = liveAssets.map((item) => item.sourceTimestamp).sort().at(-1) ?? new Date().toISOString();
+  return {
+    assets: liveAssets,
+    isStale: false,
+    source: `${provider} + USD/RUB`,
+    sourceUrl: provider === "Binance" ? "https://www.binance.com/en/price" : "https://www.okx.com/prices",
+    updatedAt,
+    notice: `Котировки получены с ${provider}; пары USDT пересчитаны в рубли по USD/RUB. Это ориентир, а не курс покупки.`,
+  };
+}
+
+export async function getMarketAssetsFromProviders(request: JsonFetcher = fetchJson): Promise<MarketAssetList> {
+  try {
+    return await loadCoinGeckoMarket(request);
+  } catch {
+    try {
+      return await loadExchangeMarket(request, "Binance");
+    } catch {
+      return await loadExchangeMarket(request, "OKX");
+    }
+  }
+}
+
 export async function getMarketAssets(): Promise<MarketAssetList> {
   if (listCache && Date.now() - listCache.savedAt < CACHE_MS) return listCache.value;
   try {
-    type CoinGeckoMarket = {
-      id: string;
-      current_price: number;
-      price_change_percentage_24h: number | null;
-      last_updated: string;
-      sparkline_in_7d?: { price?: number[] };
-    };
-    const ids = assets.map((item) => item.coinGeckoId).join(",");
-    const rows = await fetchJson<CoinGeckoMarket[]>(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=rub&ids=${ids}&sparkline=true&price_change_percentage=24h`);
-    const byId = new Map(rows.map((row) => [row.id, row]));
-    const liveAssets = assets.map((item) => {
-      const row = byId.get(item.coinGeckoId);
-      if (!row || !Number.isFinite(row.current_price)) throw new Error(`Missing ${item.symbol}`);
-      const rawSparkline = row.sparkline_in_7d?.price?.filter(Number.isFinite) ?? [];
-      const lastSparklinePrice = rawSparkline.at(-1);
-      const sparklineScale = lastSparklinePrice && lastSparklinePrice > 0 ? row.current_price / lastSparklinePrice : 1;
-      const step = Math.max(1, Math.floor(rawSparkline.length / 24));
-      return {
-        symbol: item.symbol,
-        name: item.name,
-        priceRub: row.current_price,
-        change24hPercent: row.price_change_percentage_24h ?? 0,
-        sourceTimestamp: row.last_updated,
-        isStale: false,
-        sparklineRub: rawSparkline.filter((_value, index) => index % step === 0).slice(-24).map((price) => price * sparklineScale),
-        accent: item.accent,
-      };
-    });
-    const updatedAt = liveAssets.map((item) => item.sourceTimestamp).sort().at(-1) ?? new Date().toISOString();
-    const value: MarketAssetList = {
-      assets: liveAssets,
-      isStale: false,
-      source: "CoinGecko",
-      sourceUrl: "https://docs.coingecko.com/reference/coins-markets",
-      updatedAt,
-    };
+    const value = await getMarketAssetsFromProviders();
     listCache = { value, savedAt: Date.now() };
     return value;
   } catch {
