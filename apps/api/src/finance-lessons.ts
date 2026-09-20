@@ -58,7 +58,7 @@ function questionsFrom(testBlock: string, lessonNumber: number): CryptoQuestionS
     const correctLetter = block.match(/\*\*Правильный ответ:\*\*\s*([ABC])/)?.[1];
     if (!title || answers.length !== 3 || !correctLetter) throw new Error("Не удалось прочитать тест финансового урока");
     const correct = answers.find(([, letter]) => letter === correctLetter)?.[2];
-    const wrong = answers.filter(([, letter]) => letter !== correctLetter).map(([, answer]) => answer);
+    const wrong = answers.filter(([, letter]) => letter !== correctLetter).map(([, , answer]) => answer);
     if (!correct || wrong.length !== 2) throw new Error("Не удалось собрать ответы теста финансового урока");
     return { id: `finance-${lessonNumber}-${index + 1}`, text: title, correct, wrong: [wrong[0]!, wrong[1]!], explanation: `Правильный ответ: ${correctLetter}.` };
   });

@@ -50,3 +50,15 @@ test("finance lessons preserve seven source screens, six illustrations and no in
   assert.equal(firstLesson?.pages[0]?.kind, "CONTENT");
   assert.match(firstLesson?.pages[0]?.body ?? "", /Доходность показывает, как изменилась стоимость актива за определённый период/);
 });
+
+test("finance quiz keeps full source text for every answer option", async () => {
+  await initializeLearningState(new TestProgressRepository());
+  const lesson = await getLesson("finance-volatility", { id: "max:quiz", displayName: "Ирина" });
+  const quizQuestion = (await import("./data.js")).getQuizByLesson("finance-volatility")?.questions[1];
+  assert.ok(lesson);
+  assert.deepEqual(quizQuestion?.options.map((option) => option.text).sort(), [
+    "цену актива практически невозможно изменить",
+    "актив обязательно имеет низкий риск",
+    "крупную сделку легче провести без сильного влияния на цену",
+  ].sort());
+});
