@@ -12,7 +12,6 @@ import {
   Info,
   Lightbulb,
   ListChecks,
-  RefreshCw,
   Route,
   ShieldAlert,
   Sparkles,
@@ -325,7 +324,12 @@ function CareerTopbar({ title, backTo }: { title: string; backTo: string }) {
 }
 
 function CareerLoading({ calculating = false }: { calculating?: boolean }) {
-  return <div className="career-page career-load-state"><RefreshCw className="career-spin"/><strong>{calculating ? "Сравниваем ваши ответы" : "Загружаем Карьерный компас"}</strong><p>{calculating ? "Формируем причины, сильные стороны и возможные сложности." : "Подготавливаем вопросы и направления."}</p></div>;
+  return <div className="career-page career-skeleton" role="status" aria-label={calculating ? "Сравниваем ответы" : "Загружаем Карьерный компас"}>
+    <div className="career-skeleton__topbar"><i/><b/><i/></div>
+    <section className="career-skeleton__hero"><span><b/><b/><b/></span><i/></section>
+    <section className="career-skeleton__card"><i/><span><b/><b/><b/></span></section>
+    <section className="career-skeleton__card"><i/><span><b/><b/></span></section>
+  </div>;
 }
 
 function CareerError() {

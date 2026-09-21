@@ -1,9 +1,9 @@
 export const robotAssets = {
-  waving: "/assets/crypto-buddy.png",
-  reading: "/assets/crypto-buddy-reading.png",
-  teaching: "/assets/crypto-buddy-teaching.png",
-  thinking: "/assets/crypto-buddy-thinking.png",
-  celebrating: "/assets/crypto-buddy-celebrating.png",
+  waving: "/assets/crypto-buddy.webp",
+  reading: "/assets/crypto-buddy-reading.webp",
+  teaching: "/assets/crypto-buddy-teaching.webp",
+  thinking: "/assets/crypto-buddy-thinking.webp",
+  celebrating: "/assets/crypto-buddy-celebrating.webp",
 } as const;
 
 export type RobotPose = keyof typeof robotAssets;

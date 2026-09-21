@@ -267,7 +267,13 @@ function ProfileError({ retry }: { retry: () => void }) {
 }
 
 function ProfileSkeleton() {
-  return <div className="full-profile-page profile-skeleton"><i/><i/><i/><i/><i/></div>;
+  return <div className="full-profile-page profile-skeleton" role="status" aria-label="Загружаем профиль">
+    <div className="profile-skeleton__topbar"><i/><b/><i/></div>
+    <section className="profile-skeleton__hero"><span><b/><b/><b/></span><i/></section>
+    <section className="profile-skeleton__stats">{Array.from({ length: 4 }, (_, index) => <article key={index}><i/><span><b/><b/></span></article>)}</section>
+    <section className="profile-skeleton__section"><b/><i/><i/></section>
+    <section className="profile-skeleton__section"><b/><i/></section>
+  </div>;
 }
 
 function courseIcon(index: number) {

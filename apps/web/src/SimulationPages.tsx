@@ -70,6 +70,38 @@ function dayWord(count: number) {
   return "дней";
 }
 
+function SimulationListSkeleton() {
+  return <div className="simulation-skeleton simulation-skeleton--list" role="status" aria-label="Загружаем сценарии">
+    {Array.from({ length: 3 }, (_, index) => <article className="simulation-skeleton__scenario" key={index}><i/><span><b/><b/><b/></span></article>)}
+  </div>;
+}
+
+function ScenarioIntroSkeleton() {
+  return <div className="simulation-skeleton" role="status" aria-label="Загружаем описание сценария">
+    <section className="simulation-skeleton__hero"><b/><b/><b/></section>
+    <div className="simulation-skeleton__facts"><i/><i/></div>
+    <section className="simulation-skeleton__panel"><b/><i/><i/><i/></section>
+  </div>;
+}
+
+function ReplaySkeleton() {
+  return <div className="simulation-skeleton simulation-skeleton--replay" role="status" aria-label="Загружаем Market Replay">
+    <div className="simulation-skeleton__toolbar"><i/><span><b/><b/></span><i/></div>
+    <section className="simulation-skeleton__balance"><span><b/><b/><b/></span><i/></section>
+    <section className="simulation-skeleton__chart"><b/><i/></section>
+    <section className="simulation-skeleton__panel"><b/><i/><i/><i/></section>
+  </div>;
+}
+
+function ReplayResultSkeleton() {
+  return <div className="simulation-skeleton" role="status" aria-label="Готовим итоговый разбор">
+    <section className="simulation-skeleton__result"><i/><b/><b/></section>
+    <div className="simulation-skeleton__facts"><i/><i/></div>
+    <section className="simulation-skeleton__chart"><b/><i/></section>
+    <section className="simulation-skeleton__panel"><b/><i/><i/></section>
+  </div>;
+}
+
 export function PracticePage() {
   const [scenarios, setScenarios] = useState<ScenarioSummary[] | null>(null);
   const [error, setError] = useState(false);
@@ -94,7 +126,7 @@ export function PracticePage() {
 
       <div className="scenario-heading"><div><span>Доступные сценарии</span><h2>Выбери исторический период</h2></div><strong>{scenarios?.length ?? 1}</strong></div>
       {error ? <div className="flow-error"><strong>Не удалось загрузить сценарий</strong><span>Проверь локальный API.</span></div> : !scenarios ? (
-        <div className="flow-loading"><i /><i /></div>
+        <SimulationListSkeleton />
       ) : scenarios.map((scenario) => <ScenarioCard key={scenario.id} scenario={scenario} />)}
 
       <aside className="robot-tip">
@@ -152,7 +184,7 @@ export function ScenarioIntroPage() {
     }
   };
 
-  if (!scenario) return <div className="page page--flow"><FlowBack /><div className="flow-loading"><i /><i /><i /></div>{error && <p className="form-error">{error}</p>}</div>;
+  if (!scenario) return <div className="page page--flow"><FlowBack /><ScenarioIntroSkeleton/>{error && <p className="form-error">{error}</p>}</div>;
 
   return (
     <div className="page page--flow scenario-intro">
@@ -231,7 +263,7 @@ export function ReplayPage() {
     catch { setMessage("Пока рано завершать период"); setBusy(false); }
   };
 
-  if (!state) return <div className="page page--flow replay-page"><div className="flow-loading"><i /><i /><i /><i /></div><p className="form-error">{message}</p></div>;
+  if (!state) return <div className="page page--flow replay-page"><ReplaySkeleton/><p className="form-error">{message}</p></div>;
 
   const asset = state.assets.find((item) => item.symbol === selectedSymbol) ?? state.assets[0]!;
   const position = state.positions.find((item) => item.symbol === selectedSymbol);
@@ -336,7 +368,7 @@ export function ReplayResultPage() {
     api.simulationState(sessionId).then((item) => { setState(item); setResult(item.result); }).catch(() => undefined);
   }, [sessionId]);
 
-  if (!state || !result) return <div className="page page--flow"><div className="flow-loading"><i /><i /><i /></div></div>;
+  if (!state || !result) return <div className="page page--flow"><ReplayResultSkeleton/></div>;
   const positive = result.returnPercent >= 0;
 
   return (

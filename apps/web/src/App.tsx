@@ -15,19 +15,51 @@ import {
   TrendingUp,
   WalletCards,
 } from "lucide-react";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
 import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
-import { CourseLessonsPage, LessonPage, QuizPage, QuizResultPage } from "./LearningPages";
-import { MarketAssetPage, MarketNewsPage, MarketPage } from "./MarketPages";
-import { ProfilePage } from "./ProfilePage";
-import { CareerLandingPage, CareerResultPage, CareerRolePage, CareerTestPage } from "./CareerPages";
-import { SecurityCasePage, SecurityPage, ThreatPage } from "./SecurityPages";
-import { PracticePage, ReplayPage, ReplayResultPage, ScenarioIntroPage } from "./SimulationPages";
 import { robotAssets } from "./robot";
 import type { Course, HomeData } from "./types";
 import { currentMaxLaunchData } from "./max-client";
 import { useTheme } from "./theme";
+
+function lazyPage<T extends Record<K, ComponentType>, K extends keyof T>(loader: () => Promise<T>, name: K) {
+  return lazy(async () => ({ default: (await loader())[name] }));
+}
+
+const CourseLessonsPage = lazyPage(() => import("./LearningPages"), "CourseLessonsPage");
+const LessonPage = lazyPage(() => import("./LearningPages"), "LessonPage");
+const QuizPage = lazyPage(() => import("./LearningPages"), "QuizPage");
+const QuizResultPage = lazyPage(() => import("./LearningPages"), "QuizResultPage");
+const PracticePage = lazyPage(() => import("./SimulationPages"), "PracticePage");
+const ScenarioIntroPage = lazyPage(() => import("./SimulationPages"), "ScenarioIntroPage");
+const ReplayPage = lazyPage(() => import("./SimulationPages"), "ReplayPage");
+const ReplayResultPage = lazyPage(() => import("./SimulationPages"), "ReplayResultPage");
+const SecurityPage = lazyPage(() => import("./SecurityPages"), "SecurityPage");
+const SecurityCasePage = lazyPage(() => import("./SecurityPages"), "SecurityCasePage");
+const ThreatPage = lazyPage(() => import("./SecurityPages"), "ThreatPage");
+const MarketPage = lazyPage(() => import("./MarketPages"), "MarketPage");
+const MarketNewsPage = lazyPage(() => import("./MarketPages"), "MarketNewsPage");
+const MarketAssetPage = lazyPage(() => import("./MarketPages"), "MarketAssetPage");
+const ProfilePage = lazyPage(() => import("./ProfilePage"), "ProfilePage");
+const CareerLandingPage = lazyPage(() => import("./CareerPages"), "CareerLandingPage");
+const CareerTestPage = lazyPage(() => import("./CareerPages"), "CareerTestPage");
+const CareerResultPage = lazyPage(() => import("./CareerPages"), "CareerResultPage");
+const CareerRolePage = lazyPage(() => import("./CareerPages"), "CareerRolePage");
+
+const sectionLoaders = {
+  learn: () => import("./LearningPages"),
+  practice: () => import("./SimulationPages"),
+  security: () => import("./SecurityPages"),
+  market: () => import("./MarketPages"),
+  profile: () => import("./ProfilePage"),
+  career: () => import("./CareerPages"),
+};
+
+function preloadSection(path: string) {
+  const section = path.split("/")[1] as keyof typeof sectionLoaders;
+  return sectionLoaders[section]?.();
+}
 
 function useRemoteData<T>(loader: (signal: AbortSignal) => Promise<T>) {
   const [data, setData] = useState<T | null>(null);
@@ -68,8 +100,9 @@ export function App() {
   return (
     <main className="app-canvas" data-crypto-theme={theme}>
       <section className="phone-shell">
-        <div className="screen-scroll">
-          <Routes>
+            <div className="screen-scroll">
+              <Suspense fallback={<RouteChunkFallback pathname={location.pathname} />}>
+              <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/learn" element={<LearnPage />} />
             <Route path="/learn/:courseId" element={<CourseLessonsPage />} />
@@ -91,7 +124,8 @@ export function App() {
             <Route path="/career/test/:attemptId" element={<CareerTestPage />} />
             <Route path="/career/result/:attemptId" element={<CareerResultPage />} />
             <Route path="/career/roles/:roleId" element={<CareerRolePage />} />
-          </Routes>
+              </Routes>
+              </Suspense>
         </div>
         {showBottomNav && <BottomNav />}
       </section>
@@ -111,13 +145,22 @@ function BottomNav() {
   return (
     <nav className="bottom-nav" aria-label="Основная навигация">
       {nav.map((item) => (
-        <NavLink key={item.to} to={item.to} end={item.to === "/"} className="bottom-nav__item">
+            <NavLink key={item.to} to={item.to} end={item.to === "/"} className="bottom-nav__item" onPointerEnter={() => void preloadSection(item.to)} onFocus={() => void preloadSection(item.to)} onTouchStart={() => void preloadSection(item.to)}>
           <item.icon size={19} strokeWidth={1.9} />
           <span>{item.label}</span>
         </NavLink>
       ))}
     </nav>
   );
+}
+
+function RouteChunkFallback({ pathname }: { pathname: string }) {
+  const label = pathname.startsWith("/practice") || pathname.startsWith("/simulation") ? "практику" : pathname.startsWith("/security") ? "безопасность" : pathname.startsWith("/market") ? "рынок" : pathname.startsWith("/career") ? "карьерный компас" : pathname.startsWith("/profile") ? "профиль" : "урок";
+  return <div className="route-chunk-skeleton" role="status" aria-label={`Загружаем ${label}`}>
+    <header><i/><span><b/><b/></span></header>
+    <section className="route-chunk-skeleton__hero"><b/><b/><b/></section>
+    <section className="route-chunk-skeleton__cards"><i/><i/><i/></section>
+  </div>;
 }
 
 function HomePage() {

@@ -281,7 +281,14 @@ function SecurityError({ retry }: { retry: () => void }) {
 }
 
 function SecuritySkeleton({ rows = 5 }: { rows?: number }) {
-  return <div className="security-skeleton">{Array.from({ length: rows }, (_, index) => <i key={index}/>)}</div>;
+  return <div className="security-skeleton" role="status" aria-label="Загружаем материалы по безопасности">
+    <div className="security-skeleton__heading"><span><b/><b/></span><i/></div>
+    {Array.from({ length: rows }, (_, index) => <article key={index}>
+      <i className="security-skeleton__icon"/>
+      <span className="security-skeleton__lines"><b/><b/><b/></span>
+      <i className="security-skeleton__action"/>
+    </article>)}
+  </div>;
 }
 
 function caseIcon(index: number) {
