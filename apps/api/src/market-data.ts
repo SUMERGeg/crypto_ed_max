@@ -1,5 +1,11 @@
 type MarketPeriod = "1D" | "1W" | "1M" | "3M";
 type PricePoint = { at: string; priceRub: number };
+type MarketHistory = {
+  series: PricePoint[];
+  source: string;
+  sourceUrl: string;
+  note?: string;
+};
 
 type AssetConfig = {
   symbol: string;
@@ -199,15 +205,70 @@ function sampleSeries(points: PricePoint[], limit = 80) {
   return sampled;
 }
 
-function fallbackSeries(config: AssetConfig, period: MarketPeriod): PricePoint[] {
-  const count = period === "1D" ? 24 : period === "1W" ? 28 : period === "1M" ? 30 : 45;
-  const duration = periodDays[period] * 86_400_000;
-  const end = Date.parse(FALLBACK_AT);
-  return Array.from({ length: count }, (_item, index) => {
-    const progress = index / Math.max(1, count - 1);
-    const factor = 0.94 + progress * 0.06 + Math.sin(index * 0.9 + config.symbol.length) * 0.018;
-    return { at: new Date(end - duration + duration * progress).toISOString(), priceRub: Math.round(config.fallbackPriceRub * factor * 100) / 100 };
-  });
+function validSeries(points: PricePoint[]) {
+  return sampleSeries(points.filter((point) => Number.isFinite(Date.parse(point.at)) && Number.isFinite(point.priceRub) && point.priceRub > 0).sort((left, right) => Date.parse(left.at) - Date.parse(right.at)));
+}
+
+const candleSettings: Record<MarketPeriod, { interval: string; okxBar: string; limit: number }> = {
+  "1D": { interval: "1h", okxBar: "1H", limit: 25 },
+  "1W": { interval: "4h", okxBar: "4H", limit: 43 },
+  "1M": { interval: "1d", okxBar: "1Dutc", limit: 31 },
+  "3M": { interval: "1d", okxBar: "1Dutc", limit: 91 },
+};
+
+export async function getMarketHistoryFromProviders(symbol: string, requestedPeriod: string, request: JsonFetcher = fetchJson): Promise<MarketHistory | null> {
+  const config = assets.find((item) => item.symbol === symbol.toUpperCase());
+  if (!config) return null;
+  const period: MarketPeriod = ["1D", "1W", "1M", "3M"].includes(requestedPeriod) ? requestedPeriod as MarketPeriod : "1W";
+  try {
+    type MarketChart = { prices?: Array<[number, number]> };
+    const chart = await request<MarketChart>(`https://api.coingecko.com/api/v3/coins/${config.coinGeckoId}/market_chart?vs_currency=rub&days=${periodDays[period]}`);
+    const series = validSeries((chart.prices ?? []).map(([at, priceRub]) => ({ at: new Date(at).toISOString(), priceRub })));
+    if (series.length < 2) throw new Error("CoinGecko history unavailable");
+    return { series, source: "CoinGecko", sourceUrl: "https://docs.coingecko.com/reference/coins-id-market-chart" };
+  } catch {
+    // Try exchange candles below.
+  }
+
+  let usdRub: number;
+  try {
+    type RubRate = { Valute?: { USD?: { Value?: number } } };
+    const rubRate = await request<RubRate>("https://www.cbr-xml-daily.ru/daily_json.js", 3_000);
+    usdRub = Number(rubRate.Valute?.USD?.Value);
+    if (!Number.isFinite(usdRub) || usdRub <= 0) return null;
+  } catch {
+    return null;
+  }
+
+  const settings = candleSettings[period];
+  try {
+    const rows = await request<Array<[number, string, string, string, string]>>(`https://data-api.binance.vision/api/v3/klines?symbol=${config.binanceSymbol}&interval=${settings.interval}&limit=${settings.limit}`, 4_000);
+    const series = validSeries(rows.map((row) => ({ at: new Date(Number(row[0])).toISOString(), priceRub: Number(row[4]) * usdRub })));
+    if (series.length < 2) throw new Error("Binance history unavailable");
+    return {
+      series,
+      source: "Binance + USD/RUB",
+      sourceUrl: "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints#klinecandlestick-data",
+      note: "Свечи Binance в USDT пересчитаны по текущему курсу USD/RUB.",
+    };
+  } catch {
+    // Try OKX below.
+  }
+
+  try {
+    type OkxCandles = { data?: Array<[string, string, string, string, string]> };
+    const payload = await request<OkxCandles>(`https://www.okx.com/api/v5/market/history-candles?instId=${config.okxSymbol}&bar=${settings.okxBar}&limit=${settings.limit}`, 4_000);
+    const series = validSeries((payload.data ?? []).map((row) => ({ at: new Date(Number(row[0])).toISOString(), priceRub: Number(row[4]) * usdRub })));
+    if (series.length < 2) throw new Error("OKX history unavailable");
+    return {
+      series,
+      source: "OKX + USD/RUB",
+      sourceUrl: "https://www.okx.com/docs-v5/en/#order-book-trading-market-data-get-candlesticks-history",
+      note: "Свечи OKX в USDT пересчитаны по текущему курсу USD/RUB.",
+    };
+  } catch {
+    return null;
+  }
 }
 
 async function comparisonSources(config: AssetConfig, primaryPriceRub: number, primaryAt: string) {
@@ -250,31 +311,24 @@ export async function getMarketAssetDetail(symbol: string, requestedPeriod: stri
   const list = await getMarketAssets();
   const current = list.assets.find((item) => item.symbol === config.symbol)!;
   const sourcesPromise = comparisonSources(config, current.priceRub, current.sourceTimestamp);
-  let series: PricePoint[];
-  let chartIsStale = current.isStale;
-  try {
-    type MarketChart = { prices?: Array<[number, number]> };
-    const chart = await fetchJson<MarketChart>(`https://api.coingecko.com/api/v3/coins/${config.coinGeckoId}/market_chart?vs_currency=rub&days=${periodDays[period]}`);
-    series = sampleSeries((chart.prices ?? []).filter((point) => Number.isFinite(point[0]) && Number.isFinite(point[1])).map(([at, priceRub]) => ({ at: new Date(at).toISOString(), priceRub })));
-    if (series.length < 2) throw new Error("Chart unavailable");
-    const lastChartAt = Date.parse(series.at(-1)!.at);
-    const currentQuoteAt = Date.parse(current.sourceTimestamp);
-    if (Number.isFinite(lastChartAt) && Number.isFinite(currentQuoteAt) && currentQuoteAt - lastChartAt > 48 * 60 * 60_000) chartIsStale = true;
-  } catch {
-    series = period === "1W" && current.sparklineRub.length > 1
-      ? current.sparklineRub.map((priceRub, index) => ({ at: new Date(Date.parse(current.sourceTimestamp) - (current.sparklineRub.length - 1 - index) * 6 * 60 * 60_000).toISOString(), priceRub }))
-      : fallbackSeries(config, period);
-    chartIsStale = true;
-  }
+  const history = await getMarketHistoryFromProviders(config.symbol, period);
+  const series = history?.series ?? [];
+  const lastChartAt = Date.parse(series.at(-1)?.at ?? "");
+  const currentQuoteAt = Date.parse(current.sourceTimestamp);
+  const chartIsStale = Boolean(history) && Number.isFinite(lastChartAt) && Number.isFinite(currentQuoteAt) && currentQuoteAt - lastChartAt > 48 * 60 * 60_000;
   const prices = series.map((point) => point.priceRub);
   const value = {
     ...current,
     description: config.description,
     period,
     series,
-    highPeriodRub: Math.max(...prices),
-    lowPeriodRub: Math.min(...prices),
+    highPeriodRub: prices.length ? Math.max(...prices) : null,
+    lowPeriodRub: prices.length ? Math.min(...prices) : null,
     chartIsStale,
+    chartUnavailable: !history,
+    chartSource: history?.source ?? null,
+    chartSourceUrl: history?.sourceUrl ?? null,
+    chartNote: history?.note,
     sources: await sourcesPromise,
     source: list.source,
     sourceUrl: list.sourceUrl,

@@ -131,9 +131,13 @@ export type MarketAssetDetail = MarketAsset & {
   description: string;
   period: MarketPeriod;
   series: Array<{ at: string; priceRub: number }>;
-  highPeriodRub: number;
-  lowPeriodRub: number;
+  highPeriodRub: number | null;
+  lowPeriodRub: number | null;
   chartIsStale: boolean;
+  chartUnavailable: boolean;
+  chartSource: string | null;
+  chartSourceUrl: string | null;
+  chartNote?: string;
   sources: Array<{ name: string; priceRub: number; updatedAt: string; note: string }>;
   source: string;
   sourceUrl: string;

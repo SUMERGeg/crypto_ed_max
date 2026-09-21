@@ -17,6 +17,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
 import { api } from "./api";
+import { buildChartGeometry, nearestChartPoint } from "./market-chart";
 import { robotAssets } from "./robot";
 import type { MarketAsset, MarketAssetDetail, MarketAssetList, MarketNewsArticle, MarketNewsSummary, MarketPeriod } from "./types";
 
@@ -161,13 +162,13 @@ export function MarketAssetPage() {
     <div className="market-detail-page">
       <MarketTopBar onBack={() => navigate("/market")} title="Котировка актива" />
       {error ? <MarketError retry={retry} /> : !data ? <MarketSkeleton rows={2} /> : (
-        <AssetDetailContent asset={data} period={period} setPeriod={setPeriod} />
+        <AssetDetailContent asset={data} period={period} setPeriod={setPeriod} retry={retry} />
       )}
     </div>
   );
 }
 
-function AssetDetailContent({ asset, period, setPeriod }: { asset: MarketAssetDetail; period: MarketPeriod; setPeriod: (period: MarketPeriod) => void }) {
+function AssetDetailContent({ asset, period, setPeriod, retry }: { asset: MarketAssetDetail; period: MarketPeriod; setPeriod: (period: MarketPeriod) => void; retry: () => void }) {
   const rising = asset.change24hPercent >= 0;
   return (
     <>
@@ -189,12 +190,29 @@ function AssetDetailContent({ asset, period, setPeriod }: { asset: MarketAssetDe
             <button key={item} className={period === item ? "active" : ""} onClick={() => setPeriod(item)}>{periodLabel(item)}</button>
           ))}
         </div>
-        <MainChart series={asset.series} rising={(asset.series.at(-1)?.priceRub ?? asset.priceRub) >= (asset.series[0]?.priceRub ?? asset.priceRub)} />
-        {asset.chartIsStale && <div className="chart-stale"><AlertTriangle size={13} /> График построен по сохранённым данным до {formatDate(asset.series.at(-1)?.at ?? asset.updatedAt)}.</div>}
-        <div className="chart-extremes">
-          <div><span>Минимум за период</span><strong>{rubles.format(asset.lowPeriodRub)} ₽</strong></div>
-          <div><span>Максимум за период</span><strong>{rubles.format(asset.highPeriodRub)} ₽</strong></div>
-        </div>
+        {asset.chartUnavailable ? (
+          <div className="chart-unavailable">
+            <AlertTriangle size={22} />
+            <strong>История цены временно недоступна</strong>
+            <p>Мы не рисуем примерный график вместо настоящих данных.</p>
+            <button type="button" onClick={retry}><RefreshCw size={14} /> Повторить</button>
+          </div>
+        ) : (
+          <>
+            <MainChart key={`${period}-${asset.series.at(-1)?.at ?? "empty"}`} series={asset.series} rising={(asset.series.at(-1)?.priceRub ?? asset.priceRub) >= (asset.series[0]?.priceRub ?? asset.priceRub)} />
+            {asset.chartIsStale && <div className="chart-stale"><AlertTriangle size={13} /> Последняя точка получена {formatDate(asset.series.at(-1)?.at ?? asset.updatedAt)}.</div>}
+            {asset.chartSource && asset.chartSourceUrl && (
+              <a className="chart-source-note" href={asset.chartSourceUrl} target="_blank" rel="noreferrer">
+                <span><b>История: {asset.chartSource}</b>{asset.chartNote && <small>{asset.chartNote}</small>}</span>
+                <ExternalLink size={13} />
+              </a>
+            )}
+            {asset.lowPeriodRub !== null && asset.highPeriodRub !== null && <div className="chart-extremes">
+              <div><span>Минимум за период</span><strong>{rubles.format(asset.lowPeriodRub)} ₽</strong></div>
+              <div><span>Максимум за период</span><strong>{rubles.format(asset.highPeriodRub)} ₽</strong></div>
+            </div>}
+          </>
+        )}
       </section>
 
       <section className="source-comparison">
@@ -215,23 +233,33 @@ function AssetDetailContent({ asset, period, setPeriod }: { asset: MarketAssetDe
 }
 
 function MainChart({ series, rising }: { series: Array<{ at: string; priceRub: number }>; rising: boolean }) {
-  const width = 320;
-  const height = 150;
-  const points = linePoints(series.map((point) => point.priceRub), width, height, 10);
+  const width = 360;
+  const height = 190;
+  const chart = buildChartGeometry(series, width, height);
+  const [selectedIndex, setSelectedIndex] = useState(series.length - 1);
+  const selected = chart.points[Math.min(selectedIndex, chart.points.length - 1)];
   const color = rising ? "#1fb477" : "#e15d67";
-  const area = points ? `10,${height - 8} ${points} ${width - 10},${height - 8}` : "";
   const first = series[0];
   const last = series.at(-1);
+  const middle = series[Math.floor((series.length - 1) / 2)];
+  const selectPoint = (clientX: number, element: SVGRectElement) => {
+    const bounds = element.getBoundingClientRect();
+    const x = (clientX - bounds.left) / bounds.width * width;
+    setSelectedIndex(nearestChartPoint(chart.points, x));
+  };
   return (
-    <>
+    <div className="market-chart-wrap">
+      {selected && <div className="chart-selection"><strong>{rubles.format(selected.priceRub)} ₽</strong><span>{formatChartMoment(selected.at)}</span></div>}
       <svg className="main-market-chart" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="График цены за выбранный период">
         <defs><linearGradient id="market-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={color} stopOpacity=".25"/><stop offset="1" stopColor={color} stopOpacity="0"/></linearGradient></defs>
-        <line x1="10" y1="45" x2="310" y2="45"/><line x1="10" y1="82" x2="310" y2="82"/><line x1="10" y1="119" x2="310" y2="119"/>
-        <polygon points={area} fill="url(#market-area)" />
-        <polyline points={points} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        {chart.yTicks.map((tick) => <g key={tick.y}><line className="chart-grid-line" x1="10" y1={tick.y} x2={chart.plotRight} y2={tick.y}/><text className="chart-y-label" x="355" y={tick.y + 3} textAnchor="end">{compactRubles(tick.price)}</text></g>)}
+        <polygon points={chart.areaPoints} fill="url(#market-area)" />
+        <polyline points={chart.linePoints} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        {selected && <><line className="chart-crosshair" x1={selected.x} y1="12" x2={selected.x} y2={chart.baseline}/><circle className="chart-point" cx={selected.x} cy={selected.y} r="4.5" fill={color}/></>}
+        <rect className="chart-hit-area" x="0" y="0" width={width} height={height} fill="transparent" onPointerDown={(event) => selectPoint(event.clientX, event.currentTarget)} onPointerMove={(event) => { if (event.buttons === 1 || event.pointerType === "touch") selectPoint(event.clientX, event.currentTarget); }} />
       </svg>
-      <div className="market-chart-axis"><span>{first ? shortDate(first.at) : ""}</span><span>{last ? shortDate(last.at) : ""}</span></div>
-    </>
+      <div className="market-chart-axis"><span>{first ? shortDate(first.at) : ""}</span><span>{middle ? shortDate(middle.at) : ""}</span><span>{last ? shortDate(last.at) : ""}</span></div>
+    </div>
   );
 }
 
@@ -319,6 +347,17 @@ function formatDate(value: string) {
 function shortDate(value: string) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "" : new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit" }).format(date);
+}
+
+function formatChartMoment(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(date);
+}
+
+function compactRubles(value: number) {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1).replace(".", ",")} млн`;
+  if (value >= 1_000) return `${Math.round(value / 1_000)} тыс.`;
+  return rubles.format(value);
 }
 
 function periodLabel(period: MarketPeriod) {
