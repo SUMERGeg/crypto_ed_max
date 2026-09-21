@@ -30,7 +30,7 @@ export class MemoryOnboardingRepository implements OnboardingRepository {
   private readonly states = new Map<string, OnboardingState>();
 
   async get(userId: string) {
-    const state = this.states.get(userId) ?? initialState(userId === "demo-user" ? "COMPLETED" : "NOT_STARTED");
+    const state = this.states.get(userId) ?? initialState();
     return structuredClone(state);
   }
 
@@ -51,8 +51,10 @@ class PostgresOnboardingRepository implements OnboardingRepository {
   constructor(private readonly pool: InstanceType<typeof Pool>) {}
 
   async migrate() {
-    const migration = await readFile(new URL("../migrations/0006_onboarding.sql", import.meta.url), "utf8");
-    await this.pool.query(migration);
+    const schemaMigration = await readFile(new URL("../migrations/0006_onboarding.sql", import.meta.url), "utf8");
+    const resetMigration = await readFile(new URL("../migrations/0007_reset_onboarding_for_all_users.sql", import.meta.url), "utf8");
+    await this.pool.query(schemaMigration);
+    await this.pool.query(resetMigration);
   }
 
   async get(userId: string): Promise<OnboardingState> {
@@ -70,7 +72,7 @@ class PostgresOnboardingRepository implements OnboardingRepository {
       [userId],
     );
     const row = result.rows[0];
-    if (!row) return initialState(userId === "demo-user" ? "COMPLETED" : "NOT_STARTED");
+    if (!row) return initialState();
     if (!row.status) return initialState(row.onboarding_eligible ? "NOT_STARTED" : "COMPLETED");
     return {
       status: row.status,

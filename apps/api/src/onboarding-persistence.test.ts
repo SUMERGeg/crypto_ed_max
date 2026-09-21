@@ -21,7 +21,7 @@ test("new users resume onboarding and keep the final state", async () => {
   assert.ok(completed.completedAt);
 });
 
-test("existing demo user does not receive onboarding automatically", async () => {
+test("reset state lets an existing demo user see onboarding again", async () => {
   const repository = new MemoryOnboardingRepository();
-  assert.equal((await repository.get("demo-user")).status, "COMPLETED");
+  assert.equal((await repository.get("demo-user")).status, "NOT_STARTED");
 });
