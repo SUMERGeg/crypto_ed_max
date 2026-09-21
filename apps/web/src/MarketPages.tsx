@@ -286,7 +286,7 @@ function MarketError({ retry }: { retry: () => void }) {
 }
 
 function MarketSkeleton({ rows = 5 }: { rows?: number }) {
-  return <div className="market-skeleton">{Array.from({ length: rows }, (_, index) => <i key={index}/>)}</div>;
+  return <div className="market-skeleton" role="status" aria-label="Загружаем данные рынка">{Array.from({ length: rows }, (_, index) => <article className="market-skeleton__row" key={index}><i className="market-skeleton__icon"/><span className="market-skeleton__lines"><b/><b/></span><em/></article>)}</div>;
 }
 
 function linePoints(values: number[], width: number, height: number, padding: number) {

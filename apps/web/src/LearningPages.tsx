@@ -409,7 +409,11 @@ export function QuizResultPage() {
 }
 
 function FlowLoading() {
-  return <div className="flow-loading"><i /><i /><i /></div>;
+  return <div className="flow-loading flow-loading--lesson" role="status" aria-label="Загружаем учебный материал">
+    <section className="flow-loading__hero"><span className="skeleton__eyebrow" /><b className="skeleton__line skeleton__line--wide" /><b className="skeleton__line" /></section>
+    <section className="flow-loading__content"><span className="skeleton__line skeleton__line--wide" /><span className="skeleton__line skeleton__line--wide" /><span className="skeleton__line" /><span className="skeleton__line skeleton__line--wide" /></section>
+    <section className="flow-loading__answer"><i /><span><b className="skeleton__line skeleton__line--wide" /><b className="skeleton__line" /></span></section>
+  </div>;
 }
 
 function FlowError({ message = "Не удалось загрузить экран" }: { message?: string }) {

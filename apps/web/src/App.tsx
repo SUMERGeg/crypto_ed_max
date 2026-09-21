@@ -285,9 +285,15 @@ function ErrorState({ compact = false }: { compact?: boolean }) {
 }
 
 function HomeSkeleton() {
-  return <div className="page page--home"><div className="skeleton skeleton--title" /><div className="skeleton skeleton--hero" /><div className="skeleton-grid"><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /><div className="skeleton" /></div></div>;
+  return <div className="page page--home" role="status" aria-label="Загружаем главную страницу">
+    <div className="skeleton skeleton--title" />
+    <section className="skeleton skeleton--hero">
+      <span className="skeleton__eyebrow" /><span className="skeleton__line skeleton__line--wide" /><span className="skeleton__line" /><span className="skeleton__progress" />
+    </section>
+    <div className="skeleton-grid">{Array.from({ length: 4 }, (_, index) => <article className="skeleton-card" key={index}><i className="skeleton-card__icon" /><span><b className="skeleton__line skeleton__line--wide" /><b className="skeleton__line" /></span></article>)}</div>
+  </div>;
 }
 
 function ListSkeleton() {
-  return <div className="course-list"><div className="skeleton skeleton--row" /><div className="skeleton skeleton--row" /><div className="skeleton skeleton--row" /></div>;
+  return <div className="course-list" role="status" aria-label="Загружаем направления обучения">{Array.from({ length: 4 }, (_, index) => <article className="skeleton skeleton--row" key={index}><i className="skeleton-card__icon" /><span className="skeleton--row-lines"><b className="skeleton__line skeleton__line--wide" /><b className="skeleton__line" /><b className="skeleton__progress" /></span></article>)}</div>;
 }
