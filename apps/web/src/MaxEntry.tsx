@@ -23,7 +23,7 @@ export function MaxEntry({ children }: { children: ReactNode }) {
         }
         const session = await api.signInMax(launchData);
         if (!active) return;
-        setApiAccessToken(session.accessToken);
+        setApiAccessToken(session.accessToken, session.user.id);
         setState("ready");
       } catch {
         if (active) setState("error");

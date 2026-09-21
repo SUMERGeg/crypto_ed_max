@@ -61,6 +61,7 @@ export function ProfilePage() {
       <ProfileHero data={data}/>
       <ProfileStats data={data}/>
       <AppearanceSettings theme={theme} setTheme={setTheme}/>
+      <OnboardingSummary/>
       <CareerCompassSummary/>
       <ContinueLearning data={data}/>
       <CourseProgress courses={data.courses}/>
@@ -71,6 +72,19 @@ export function ProfilePage() {
       <aside className="profile-helper"><img src={robotAssets.reading} alt="Крипто-помощник читает прогресс"/><div><strong>Не гонись за процентом</strong><p>{data.robotMessage}</p></div></aside>
       <p className="profile-note">В профиле хранится только учебная активность. Реальных счетов, кошельков и финансовых данных здесь нет.</p>
     </div>
+  );
+}
+
+function OnboardingSummary() {
+  return (
+    <section className="profile-section">
+      <ProfileHeading eyebrow="О приложении" title="Знакомство с сервисом"/>
+      <NavLink className="profile-onboarding-card" to="/onboarding">
+        <span><Sparkles/></span>
+        <div><strong>Посмотреть возможности ещё раз</strong><p>Коротко о разделах, практике без реальных денег и безопасности.</p></div>
+        <ChevronRight/>
+      </NavLink>
+    </section>
   );
 }
 

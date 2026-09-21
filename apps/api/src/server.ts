@@ -42,6 +42,7 @@ import {
 } from "./career-data.js";
 import { createCareerRepository } from "./career-persistence.js";
 import { createMaxSession, resolveApiUser, verifyMaxInitData, type AppUser } from "./max-auth.js";
+import { createOnboardingRepository, type OnboardingStatus } from "./onboarding-persistence.js";
 
 try {
   loadEnvFile(fileURLToPath(new URL("../../../.env", import.meta.url)));
@@ -207,6 +208,20 @@ app.get("/api/v1/profile", async (_request, response) => {
   response.json(await getFullProfile(requestUser(response)));
 });
 
+app.get("/api/v1/onboarding", async (_request, response) => {
+  response.json(await onboardingRepository.get(requestUser(response).id));
+});
+app.post("/api/v1/onboarding", async (request, response) => {
+  const status = request.body?.status as OnboardingStatus | undefined;
+  const step = request.body?.step;
+  if (!(["IN_PROGRESS", "COMPLETED", "SKIPPED"] as OnboardingStatus[]).includes(status as OnboardingStatus)
+      || !Number.isInteger(step) || step < 1 || step > 4) {
+    response.status(400).json({ message: "Onboarding status or step is invalid" });
+    return;
+  }
+  response.json(await onboardingRepository.save(requestUser(response).id, { status: status as "IN_PROGRESS" | "COMPLETED" | "SKIPPED", step }));
+});
+
 app.get("/api/v1/career", (_request, response) => response.json(getCareerOverview(requestUser(response).id)));
 app.post("/api/v1/career/attempts", async (request, response) => {
   response.status(201).json(await createCareerAttempt(requestUser(response).id, request.body?.restart === true));
@@ -299,6 +314,7 @@ app.use((_request, response) => {
 
 const progressRepository = await createProgressRepository();
 await initializeLearningState(progressRepository);
+const onboardingRepository = await createOnboardingRepository();
 const simulationRepository = await createSimulationRepository();
 configureSimulationRepository(simulationRepository);
 const securityRepository = await createSecurityRepository();

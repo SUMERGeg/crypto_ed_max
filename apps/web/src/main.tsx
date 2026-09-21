@@ -4,13 +4,14 @@ import { BrowserRouter } from "react-router-dom";
 import { App } from "./App";
 import { ThemeProvider } from "./theme";
 import { MaxEntry } from "./MaxEntry";
+import { OnboardingGate } from "./Onboarding";
 import "./styles.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider>
       <BrowserRouter>
-        <MaxEntry><App /></MaxEntry>
+        <MaxEntry><OnboardingGate><App /></OnboardingGate></MaxEntry>
       </BrowserRouter>
     </ThemeProvider>
   </StrictMode>,

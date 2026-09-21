@@ -4,6 +4,15 @@ export type ProgressSummary = {
   percent: number;
 };
 
+export type OnboardingStatus = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "SKIPPED";
+
+export type OnboardingState = {
+  status: OnboardingStatus;
+  step: number;
+  version: number;
+  completedAt: string | null;
+};
+
 export type Course = {
   id: string;
   slug: string;
