@@ -37,7 +37,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useLayoutEffect(() => {
-    document.documentElement.style.colorScheme = theme;
+    const scheme = theme === "light" ? "only light" : "only dark";
+    document.documentElement.style.colorScheme = scheme;
+    document.querySelector('meta[name="color-scheme"]')?.setAttribute("content", scheme);
     document.documentElement.style.backgroundColor = theme === "dark" ? "#07111f" : "#f4f7fb";
     document.body.style.backgroundColor = theme === "dark" ? "#07111f" : "#f4f7fb";
     window.localStorage.setItem(STORAGE_KEY, theme);
