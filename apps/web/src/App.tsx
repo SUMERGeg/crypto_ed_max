@@ -27,6 +27,7 @@ import { PracticePage, ReplayPage, ReplayResultPage, ScenarioIntroPage } from ".
 import { robotAssets } from "./robot";
 import type { Course, HomeData } from "./types";
 import { currentMaxLaunchData } from "./max-client";
+import { useTheme } from "./theme";
 
 function useRemoteData<T>(loader: (signal: AbortSignal) => Promise<T>) {
   const [data, setData] = useState<T | null>(null);
@@ -47,6 +48,7 @@ function useRemoteData<T>(loader: (signal: AbortSignal) => Promise<T>) {
 export function App() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const showBottomNav = ["/", "/learn", "/practice", "/security", "/market", "/profile"].includes(location.pathname);
 
   useEffect(() => {
@@ -64,7 +66,7 @@ export function App() {
   }, [location.pathname, navigate]);
 
   return (
-    <main className="app-canvas">
+    <main className="app-canvas" data-crypto-theme={theme}>
       <section className="phone-shell">
         <div className="screen-scroll">
           <Routes>
