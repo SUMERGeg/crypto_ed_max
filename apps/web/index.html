@@ -6,6 +6,19 @@
     <meta name="theme-color" content="#08111f" />
     <meta name="description" content="КриптоКласс — безопасное обучение цифровым активам" />
     <title>КриптоКласс</title>
+    <script>
+      (() => {
+        const key = "crypto-education-theme";
+        const saved = localStorage.getItem(key);
+        const theme = saved === "light" || saved === "dark"
+          ? saved
+          : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        const color = theme === "dark" ? "#07111f" : "#f4f7fb";
+        document.documentElement.style.colorScheme = theme;
+        document.documentElement.style.backgroundColor = color;
+        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", color);
+      })();
+    </script>
     <script src="https://st.max.ru/js/max-web-app.js" defer></script>
   </head>
   <body>

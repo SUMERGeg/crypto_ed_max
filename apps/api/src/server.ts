@@ -283,8 +283,13 @@ app.post("/api/v1/simulations/:sessionId/complete", async (request, response) =>
   response.json(result.data);
 });
 
-app.use(express.static(webDistPath));
+app.use(express.static(webDistPath, {
+  setHeaders(response, filePath) {
+    if (filePath === webIndexPath) response.setHeader("Cache-Control", "no-store");
+  },
+}));
 app.get(/^(?!\/api\/).*/, (_request, response) => {
+  response.setHeader("Cache-Control", "no-store");
   response.sendFile(webIndexPath);
 });
 

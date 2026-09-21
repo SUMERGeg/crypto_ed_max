@@ -5,9 +5,18 @@ type MaxBackButton = {
   offClick(callback: () => void): void;
 };
 
+type MaxDeviceStorage = {
+  getItem(key: string): Promise<string | null>;
+  setItem(key: string, value: string): Promise<void>;
+};
+
 declare global {
   interface Window {
-    WebApp?: { initData?: string; BackButton?: MaxBackButton };
+    WebApp?: {
+      initData?: string;
+      BackButton?: MaxBackButton;
+      DeviceStorage?: MaxDeviceStorage;
+    };
   }
 }
 

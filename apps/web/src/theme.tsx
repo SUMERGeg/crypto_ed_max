@@ -1,4 +1,14 @@
-import { createContext, useContext, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 export type Theme = "light" | "dark";
 
@@ -17,18 +27,58 @@ function initialTheme(): Theme {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(initialTheme);
+  const [theme, setThemeState] = useState<Theme>(initialTheme);
+  const [deviceStorageReady, setDeviceStorageReady] = useState(false);
+  const manuallySelected = useRef(false);
+
+  const setTheme = useCallback((nextTheme: Theme) => {
+    manuallySelected.current = true;
+    setThemeState(nextTheme);
+  }, []);
 
   useLayoutEffect(() => {
     document.documentElement.style.colorScheme = theme;
+    document.documentElement.style.backgroundColor = theme === "dark" ? "#07111f" : "#f4f7fb";
+    document.body.style.backgroundColor = theme === "dark" ? "#07111f" : "#f4f7fb";
     window.localStorage.setItem(STORAGE_KEY, theme);
 
     const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     themeColor?.setAttribute("content", theme === "dark" ? "#07111f" : "#f4f7fb");
   }, [theme]);
 
+  useEffect(() => {
+    let active = true;
+    const storedTheme = window.WebApp?.DeviceStorage?.getItem(STORAGE_KEY);
+    if (!storedTheme) return;
+
+    storedTheme
+      .then((saved) => {
+        if (!active) return;
+        if (!manuallySelected.current && (saved === "light" || saved === "dark")) {
+          setThemeState(saved);
+        }
+        setDeviceStorageReady(true);
+      })
+      .catch(() => {
+        if (active) setDeviceStorageReady(true);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!deviceStorageReady) return;
+    void window.WebApp?.DeviceStorage?.setItem(STORAGE_KEY, theme).catch(() => undefined);
+  }, [deviceStorageReady, theme]);
+
   const value = useMemo(() => ({ theme, setTheme }), [theme]);
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={value}>
+      <div className="crypto-theme-boundary" data-crypto-theme={theme}>{children}</div>
+    </ThemeContext.Provider>
+  );
 }
 
 export function useTheme() {
