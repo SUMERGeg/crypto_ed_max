@@ -1,4 +1,4 @@
-import { ArrowLeft, BarChart3, BookOpenCheck, ChevronRight, GraduationCap, Home, ShieldCheck, Sparkles, X } from "lucide-react";
+import { ArrowLeft, BarChart3, BookOpenCheck, ChevronRight, GraduationCap, Home, ShieldCheck, Sparkles, TrendingUp, X } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { api, getApiUserId } from "./api";
@@ -12,62 +12,53 @@ type Slide = {
   eyebrow: string;
   title: string;
   text: string;
-  note?: string;
   robot: string;
   robotAlt: string;
   icon: ReactNode;
-  points: Array<{ icon: ReactNode; title: string; text: string }>;
+  preview: "home" | "learn" | "practice" | "market";
+  tip: string;
 };
 
 const slides: Slide[] = [
   {
     eyebrow: "Добро пожаловать",
-    title: "Разберёмся в криптовалютах спокойно",
-    text: "КриптоКласс помогает понять цифровые деньги простыми словами, потренироваться без реальных денег и научиться замечать риски.",
+    title: "Вот главная страница",
+    text: "Здесь собраны все направления сервиса. Выбирай то, что интересно сейчас — доступ к разделам открыт сразу.",
     robot: robotAssets.waving,
     robotAlt: "Крипто-помощник приветствует пользователя",
     icon: <Sparkles/>,
-    points: [
-      { icon: <GraduationCap/>, title: "Понятные объяснения", text: "От основ к более сложным темам." },
-      { icon: <ShieldCheck/>, title: "Безопасный подход", text: "Без обещаний дохода и советов купить актив." },
-    ],
+    preview: "home",
+    tip: "Нажми на карточку направления, чтобы начать. Если не знаешь, с чего идти, начни с «Учиться».",
   },
   {
     eyebrow: "Учись",
-    title: "Сначала разберись в основах",
-    text: "Темы идут от простых к более сложным. Уроки разбиты на короткие шаги, а итоговый тест помогает проверить главное.",
+    title: "Здесь проходят уроки",
+    text: "В «Учиться» темы идут от простых к более сложным. У каждого урока есть понятное объяснение и итоговая проверка.",
     robot: robotAssets.reading,
     robotAlt: "Крипто-помощник читает учебный материал",
     icon: <BookOpenCheck/>,
-    points: [
-      { icon: <BookOpenCheck/>, title: "Короткие страницы", text: "Одна новая мысль за один шаг." },
-      { icon: <GraduationCap/>, title: "Прогресс сохраняется", text: "Можно остановиться и продолжить позже." },
-    ],
+    preview: "learn",
+    tip: "Выбери тему на карточке. Прогресс сохранится, поэтому урок можно продолжить в другой раз.",
   },
   {
     eyebrow: "Практика и безопасность",
-    title: "Пробуй без риска для денег",
-    text: "В Market Replay можно пройти прошлые рыночные периоды. В учебных кейсах — потренироваться замечать мошеннические схемы.",
+    title: "Здесь можно практиковаться",
+    text: "В Market Replay ты принимаешь решения на виртуальные деньги. А в «Безопасности» учишься замечать опасные сообщения и схемы.",
     robot: robotAssets.teaching,
     robotAlt: "Крипто-помощник объясняет практическое задание",
     icon: <ShieldCheck/>,
-    points: [
-      { icon: <BarChart3/>, title: "Виртуальные решения", text: "Исторические цены, новости и разбор действий." },
-      { icon: <ShieldCheck/>, title: "Опасные признаки", text: "Обещания дохода, давление и просьбы перевести деньги." },
-    ],
+    preview: "practice",
+    tip: "В тренажёре нет реальных сделок: это место, чтобы спокойно увидеть последствия решений. Кейсы безопасности тоже учебные.",
   },
   {
     eyebrow: "Рынок",
-    title: "Смотри на данные, а не на обещания",
-    text: "В разделе «Рынок» собраны цены, графики и новости. Они помогают наблюдать за происходящим, но не являются советом покупать или продавать.",
-    note: "Все разделы уже открыты. Начни с того, что интересно сейчас.",
+    title: "Здесь следят за рынком",
+    text: "В разделе «Рынок» собраны цены, графики и новости. Они помогают наблюдать за происходящим, но не подсказывают, что покупать или продавать.",
     robot: robotAssets.thinking,
     robotAlt: "Крипто-помощник изучает рыночные данные",
     icon: <BarChart3/>,
-    points: [
-      { icon: <BarChart3/>, title: "Котировки и графики", text: "Данные по пяти основным активам." },
-      { icon: <Home/>, title: "Выбор за тобой", text: "После знакомства откроется главная страница." },
-    ],
+    preview: "market",
+    tip: "Смотри на цену вместе с графиком и новостями. Данные могут меняться — это не сигнал покупать или продавать.",
   },
 ];
 
@@ -130,6 +121,39 @@ export function OnboardingGate({ children }: { children: ReactNode }) {
 function OnboardingLoading() {
   const { theme } = useTheme();
   return <main className="app-canvas" data-crypto-theme={theme}><section className="phone-shell onboarding-loading" role="status" aria-label="Открываем знакомство с сервисом"><i/><span/><span/><b/></section></main>;
+}
+
+function OnboardingPreview({ kind }: { kind: Slide["preview"] }) {
+  if (kind === "home") return <section className="onboarding-preview onboarding-preview--home" aria-label="Пример главной страницы">
+    <header><strong>Главная</strong><Sparkles/></header>
+    <div className="preview-greeting"><b>Привет!</b><small>Выбери направление</small></div>
+    <div className="preview-home-grid">
+      <article className="is-highlight"><BookOpenCheck/><b>Учиться</b><small>Короткие уроки</small></article>
+      <article><BarChart3/><b>Практика</b><small>Market Replay</small></article>
+      <article><ShieldCheck/><b>Безопасность</b><small>Учебные кейсы</small></article>
+      <article><TrendingUp/><b>Крипторынок</b><small>Цены и новости</small></article>
+    </div>
+  </section>;
+
+  if (kind === "learn") return <section className="onboarding-preview onboarding-preview--learn" aria-label="Пример раздела Учиться">
+    <header><strong>Учиться</strong><span>Все темы</span></header>
+    <p>Выбери тему для первого урока</p>
+    <article className="preview-course is-highlight"><i><BookOpenCheck/></i><div><b>Криптовалюты</b><small>5 уроков · основы цифровых денег</small><em><span/></em></div><ChevronRight/></article>
+    <article className="preview-course"><i><GraduationCap/></i><div><b>Blockchain</b><small>5 уроков · как устроена сеть</small><em><span/></em></div><ChevronRight/></article>
+  </section>;
+
+  if (kind === "practice") return <section className="onboarding-preview onboarding-preview--practice" aria-label="Пример разделов Практика и Безопасность">
+    <header><strong>Практика</strong><span>Без реальных денег</span></header>
+    <article className="preview-replay is-highlight"><BarChart3/><div><small>Market Replay</small><b>Пройди прошлый рынок</b><span>Виртуальный баланс · новости · разбор</span></div><ChevronRight/></article>
+    <article className="preview-security"><ShieldCheck/><div><b>Безопасность</b><small>Учебные кейсы про опасные схемы</small></div><ChevronRight/></article>
+  </section>;
+
+  return <section className="onboarding-preview onboarding-preview--market" aria-label="Пример раздела Рынок">
+    <header><strong>Крипторынок</strong><span>Цены и новости</span></header>
+    <article className="preview-price is-highlight"><i>₿</i><div><b>Bitcoin (BTC)</b><small>Текущая цена</small></div><strong>5 460 879 ₽<em>+2,4%</em></strong></article>
+    <div className="preview-chart"><span/><span/><span/><svg viewBox="0 0 260 78" role="img" aria-label="Пример графика цены"><polyline points="0,62 20,51 35,58 53,32 72,43 90,27 110,41 128,37 145,18 163,31 182,20 200,38 220,14 240,25 260,7"/></svg></div>
+    <article className="preview-news"><TrendingUp/><div><b>Открытые новости</b><small>Смотри контекст движения цены</small></div><ChevronRight/></article>
+  </section>;
 }
 
 function OnboardingPage({ initialStep, onFinish }: { initialStep: number; onFinish: (state: OnboardingState) => void }) {
@@ -198,25 +222,18 @@ function OnboardingPage({ initialStep, onFinish }: { initialStep: number; onFini
         </div>
 
         <div className="onboarding-content" key={step}>
-          <section className="onboarding-hero">
-            <div className="onboarding-hero__copy">
+          <section className="onboarding-intro">
+            <div>
               <span>{slide.icon}{slide.eyebrow}</span>
               <h1>{slide.title}</h1>
               <p>{slide.text}</p>
             </div>
+          </section>
+          <OnboardingPreview kind={slide.preview}/>
+          <aside className="onboarding-guide">
             <img src={slide.robot} alt={slide.robotAlt}/>
-          </section>
-
-          <section className="onboarding-points">
-            {slide.points.map((point) => (
-              <article key={point.title}>
-                <i>{point.icon}</i>
-                <div><strong>{point.title}</strong><p>{point.text}</p></div>
-              </article>
-            ))}
-          </section>
-
-          {slide.note && <aside className="onboarding-note"><Sparkles/><p>{slide.note}</p></aside>}
+            <div><span>Робот-помощник</span><p>{slide.tip}</p></div>
+          </aside>
         </div>
 
         <footer className="onboarding-actions">
