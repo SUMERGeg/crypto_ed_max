@@ -28,7 +28,7 @@ const slides: Slide[] = [
     robotAlt: "Крипто-помощник приветствует пользователя",
     icon: <Sparkles/>,
     preview: "home",
-    tip: "Нажми на карточку направления, чтобы начать. Если не знаешь, с чего идти, начни с «Учиться».",
+    tip: "Нажми на карточку направления, чтобы начать. «Практика» — безопасный тренажёр с виртуальными деньгами.",
   },
   {
     eyebrow: "Учись",
@@ -128,8 +128,8 @@ function OnboardingPreview({ kind }: { kind: Slide["preview"] }) {
     <header><strong>Главная</strong><Sparkles/></header>
     <div className="preview-greeting"><b>Привет!</b><small>Выбери направление</small></div>
     <div className="preview-home-grid">
-      <article className="is-highlight"><BookOpenCheck/><b>Учиться</b><small>Короткие уроки</small></article>
-      <article><BarChart3/><b>Практика</b><small>Market Replay</small></article>
+      <article><BookOpenCheck/><b>Учиться</b><small>Короткие уроки</small></article>
+      <article className="is-highlight"><BarChart3/><b>Практика</b><small>Market Replay</small></article>
       <article><ShieldCheck/><b>Безопасность</b><small>Учебные кейсы</small></article>
       <article><TrendingUp/><b>Крипторынок</b><small>Цены и новости</small></article>
     </div>

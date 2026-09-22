@@ -204,7 +204,7 @@ function HomePage() {
         </div>
         <div className="quick-grid">
           <QuickLink to="/learn" icon={<GraduationCap />} title="Учиться" subtitle="Короткие уроки" tone="blue" />
-          <QuickLink to="/practice" icon={<TrendingUp />} title="Практиковаться" subtitle="Market Replay" tone="green" />
+          <QuickLink to="/practice" icon={<TrendingUp />} title="Практика" subtitle="Market Replay" tone="green" />
           <QuickLink to="/security" icon={<ShieldCheck />} title="Безопасность" subtitle="Кейсы и риски" tone="coral" />
           <QuickLink to="/market" icon={<Landmark />} title="Крипторынок" subtitle="Цены и новости" tone="violet" />
         </div>
