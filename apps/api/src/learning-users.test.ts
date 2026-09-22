@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { getHome, getLesson, initializeLearningState, openLesson } from "./data.js";
+import { getHome, getLesson, getQuizByLesson, initializeLearningState, lessons, openLesson } from "./data.js";
 import type { ProgressRepository, ProgressSnapshot, QuizAttemptRecord } from "./persistence.js";
 
 class TestProgressRepository implements ProgressRepository {
@@ -61,4 +61,22 @@ test("finance quiz keeps full source text for every answer option", async () => 
     "актив обязательно имеет низкий риск",
     "крупную сделку легче провести без сильного влияния на цену",
   ].sort());
+});
+
+test("Russia and law is five sequential lessons with full pages and six-question final quizzes", async () => {
+  await initializeLearningState(new TestProgressRepository());
+  const learner = { id: "max:law", displayName: "Ирина" };
+  const ids = ["law-status", "law-taxes", "law-payments", "law-mining", "law-safe-check"];
+
+  for (const [index, id] of ids.entries()) {
+    const lesson = await getLesson(id, learner);
+    const quiz = getQuizByLesson(id);
+    assert.ok(lesson);
+    assert.equal(lesson.order, index + 1);
+    assert.ok(lesson.pages.length >= 7);
+    assert.ok(lesson.pages.every((page) => page.kind === "CONTENT"));
+    assert.ok(lesson.pages.every((page) => page.kind !== "CONTENT" || page.body.trim().split(/\n\s*\n/).length >= 2));
+    assert.equal(quiz?.questions.length, 6);
+    assert.ok(lessons.find((item) => item.id === id)?.quiz.questions.every((question) => question.options.filter((option) => option.isCorrect).length === 1));
+  }
 });

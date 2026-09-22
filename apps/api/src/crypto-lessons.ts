@@ -25,7 +25,7 @@ export type CryptoLessonSpec = {
   shortDescription: string;
   durationMinutes: number;
   robotTip: string;
-  checkpointAfter: [number, number];
+  checkpointAfter?: [number, number];
   pages: CryptoLessonPageSpec[];
   questions: CryptoQuestionSpec[];
 };

@@ -1,6 +1,6 @@
 import { cryptoLessonSpecs, type CryptoLessonPageSpec, type CryptoLessonSpec } from "./crypto-lessons.js";
 import { financeLessonSpecs, type FinanceLessonSpec } from "./finance-lessons.js";
-import { digitalRubleLessonSpec } from "./law-lessons.js";
+import { lawLessonSpecs } from "./law-lessons.js";
 
 type LessonStatus = "NOT_STARTED" | "OPENED" | "COMPLETED";
 type SectionType = "TEXT" | "EXAMPLE" | "KEY_TAKEAWAY" | "RISK" | "BULLETS";
@@ -504,9 +504,9 @@ const legacyLessons: LessonRecord[] = [
 export const lessons: LessonRecord[] = [
   ...cryptoLessonSpecs.map(expandedCryptoLesson),
   ...financeLessonSpecs.map(expandedFinanceLesson),
+  ...lawLessonSpecs.map(expandedLawLesson),
   ...legacyLessons
-    .filter((item) => item.courseId !== "crypto-basics" && item.courseId !== "finance")
-    .map((item) => item.id === digitalRubleLessonSpec.id ? expandedLawLesson(digitalRubleLessonSpec) : item),
+    .filter((item) => item.courseId !== "crypto-basics" && item.courseId !== "finance" && item.courseId !== "law-russia"),
 ];
 
 let progressRepository: ProgressRepository | null = null;
