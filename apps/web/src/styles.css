@@ -283,7 +283,14 @@ a { color: inherit; text-decoration: none; }
 .lesson-page-card__eyebrow { color: #685ae5; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .065em; }
 .lesson-page-card h2,.lesson-checkpoint h2 { margin: 8px 0 14px; font-size: 19px; line-height: 1.25; letter-spacing: -.025em; }
 .lesson-page-card__illustration { margin: 0 0 16px; overflow: hidden; border: 1px solid #dde4f1; border-radius: 16px; background: #eef3ff; box-shadow: 0 8px 22px rgba(54,70,112,.1); }
-.lesson-page-card__illustration img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; }
+.lesson-page-card__illustration img { display: block; width: 100%; height: auto; object-fit: contain; }
+.lesson-artwork { position: relative; overflow: hidden; background: var(--skeleton-base); }
+.lesson-artwork img { position: relative; opacity: 0; }
+.lesson-artwork--ready img { opacity: 1; }
+.lesson-artwork__placeholder,.lesson-artwork__retry { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; color: var(--text-secondary); font-size: 13px; text-align: center; }
+.lesson-artwork__placeholder { background: linear-gradient(105deg,var(--skeleton-base),var(--skeleton-highlight),var(--skeleton-base)); background-size: 200% 100%; animation: shimmer 1.3s infinite; }
+.lesson-artwork__retry { width: 100%; border: 0; background: var(--card-background); }
+@media (prefers-reduced-motion: reduce) { .lesson-artwork__placeholder { animation: none; } }
 .lesson-page-card__illustration figcaption { padding: 9px 11px 10px; color: #68758a; font-size: 10px; line-height: 1.45; background: rgba(255,255,255,.78); }
 .lesson-page-card p { margin: 0; color: #505c70; font-size: 11px; line-height: 1.78; white-space: pre-line; }
 .lesson-page-card__body { color: #505c70; font-size: 11px; line-height: 1.78; }

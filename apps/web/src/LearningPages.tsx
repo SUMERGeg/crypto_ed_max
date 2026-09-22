@@ -18,6 +18,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { api } from "./api";
 import { robotAssets } from "./robot";
+import { LessonIllustration, preloadImage } from "./lesson-images";
 import type { CourseLessons, Lesson, Quiz, QuizAnswer, QuizResult } from "./types";
 
 function isAbortError(reason: unknown) {
@@ -97,6 +98,7 @@ export function CourseLessonsPage() {
     api.courseLessons(courseId, controller.signal).then(setData).catch((reason: unknown) => {
       if (!isAbortError(reason)) setError(true);
     });
+    void preloadImage(robotAssets.reading, "high");
     return () => controller.abort();
   }, [courseId]);
 
@@ -162,7 +164,12 @@ export function LessonPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    Promise.all([api.lesson(lessonId, controller.signal), api.openLesson(lessonId)])
+    void preloadImage(robotAssets.teaching, "high");
+    Promise.all([api.lesson(lessonId, controller.signal).then((data) => {
+      const first = data.pages[0];
+      if (first?.kind === "CONTENT" && first.illustration) void preloadImage(first.illustration.src, "high");
+      return data;
+    }), api.openLesson(lessonId)])
       .then(([lessonData]) => setLesson(lessonData))
       .catch((reason: unknown) => {
         if (!isAbortError(reason)) setError(true);
@@ -171,6 +178,22 @@ export function LessonPage() {
   }, [lessonId]);
 
   const page = lesson?.pages[current];
+  useEffect(() => {
+    if (!lesson || !page) return;
+    let cancelled = false;
+    const currentImage = page.kind === "CONTENT" ? page.illustration?.src : undefined;
+    // Warm only the next illustration, after the visible image has loaded.
+    // This avoids competing with the current page on slow mobile connections.
+    const ready = currentImage ? preloadImage(currentImage, "high") : Promise.resolve();
+    void ready.then(() => {
+      if (cancelled) return;
+      const nextImage = lesson.pages.slice(current + 1).find((item) => item.kind === "CONTENT" && item.illustration);
+      if (nextImage?.kind === "CONTENT" && nextImage.illustration) void preloadImage(nextImage.illustration.src);
+      const nextPage = lesson.pages[current + 1];
+      if (nextPage) void preloadImage(nextPage.kind === "CHECKPOINT" ? robotAssets.thinking : (current + 1) % 2 === 0 ? robotAssets.teaching : robotAssets.reading);
+    });
+    return () => { cancelled = true; };
+  }, [lesson, current, page]);
   const selectedCheckpointAnswer = page?.kind === "CHECKPOINT" ? checkpointAnswers[page.id] : undefined;
   const checkpointIsCorrect = page?.kind === "CHECKPOINT" && selectedCheckpointAnswer
     ? selectedCheckpointAnswer === page.question.correctOptionId
@@ -210,10 +233,7 @@ export function LessonPage() {
               <span className="lesson-page-card__eyebrow">{page.eyebrow}</span>
               <h2>{page.title}</h2>
               {page.illustration && (
-                <figure className="lesson-page-card__illustration">
-                  <img src={page.illustration.src} alt={page.illustration.alt} />
-                  {page.illustration.caption && <figcaption>{page.illustration.caption}</figcaption>}
-                </figure>
+                <LessonIllustration key={page.illustration.src} {...page.illustration}/>
               )}
               <LessonMarkdown body={page.body} />
             </article>

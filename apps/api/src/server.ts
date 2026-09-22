@@ -301,6 +301,9 @@ app.post("/api/v1/simulations/:sessionId/complete", async (request, response) =>
 app.use(express.static(webDistPath, {
   setHeaders(response, filePath) {
     if (filePath === webIndexPath) response.setHeader("Cache-Control", "no-store");
+    // Public artwork can be reused between screens and repeated visits.
+    // Keep a short lifetime because these filenames are not content-hashed.
+    else if (/\.(webp|png|jpe?g|svg)$/i.test(filePath)) response.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
   },
 }));
 app.get(/^(?!\/api\/).*/, (_request, response) => {

@@ -6,5 +6,6 @@ dist/
 !.env.example
 *.log
 *.tsbuildinfo
+tmp/
 vite.config.js
 vite.config.d.ts

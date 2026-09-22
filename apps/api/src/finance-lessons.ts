@@ -79,7 +79,7 @@ function parseLesson(chunk: string, index: number): FinanceLessonSpec {
         eyebrow: `Экран ${pageIndex + 1}${pageIndex === 6 ? " · Итог" : ""}`,
         title: screenTitle(screen),
         body: screenBody(screen),
-        ...(artwork ? { illustration: { src: `/assets/lessons/financial-basics/${artwork}.png`, alt: `Иллюстрация к экрану «${screenTitle(screen)}»` } } : {}),
+        ...(artwork ? { illustration: { src: `/assets/lessons/financial-basics/${artwork}.webp`, alt: `Иллюстрация к экрану «${screenTitle(screen)}»` } } : {}),
       };
     }),
     questions: questionsFrom(testBlock, index + 1),
