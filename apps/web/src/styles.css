@@ -665,6 +665,12 @@ a { color: inherit; text-decoration: none; }
 .app-canvas[data-crypto-theme="dark"] .lesson-page-card__body strong { color: #f3f7ff; }
 .app-canvas[data-crypto-theme="dark"] .lesson-page-card__body blockquote { color: #cfd9ff; background: #202a4b; }
 .app-canvas[data-crypto-theme="dark"] .lesson-page-card__body pre { color: #d8e0ef; background: #121e32; }
+.app-canvas[data-crypto-theme="dark"] .profile-topbar { border-bottom-color: #20324b; background: rgba(8,20,37,.95); }
+.app-canvas[data-crypto-theme="dark"] .profile-course-list > a,
+.app-canvas[data-crypto-theme="dark"] .profile-quiz-list > a,
+.app-canvas[data-crypto-theme="dark"] .profile-replay-list > a,
+.app-canvas[data-crypto-theme="dark"] .quote-row,
+.app-canvas[data-crypto-theme="dark"] .market-row { border-bottom-color: #29415f; }
 
 .app-canvas[data-crypto-theme="dark"] .lesson-section--example,
 .app-canvas[data-crypto-theme="dark"] .lesson-page-card--example,
