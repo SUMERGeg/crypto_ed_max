@@ -744,6 +744,53 @@ a { color: inherit; text-decoration: none; }
 .app-canvas[data-crypto-theme="dark"] .market-topbar button,
 .app-canvas[data-crypto-theme="dark"] .market-topbar > span { color: var(--text-primary); border-color: var(--border-color); background: var(--card-background); }
 .app-canvas[data-crypto-theme="dark"] .market-topbar > span { color: #a79cff; }
+
+/* Small, self-contained easter egg for the decorative header sparkle. */
+.profile-topbar .coin-rain-button,
+.market-topbar .coin-rain-button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: #6759df;
+  border: 1px solid #e0e4ec;
+  border-radius: 11px;
+  background: #efedff;
+  cursor: pointer;
+  transition: transform .18s ease, background-color .18s ease;
+}
+.coin-rain-button:active { transform: scale(.9); }
+.coin-rain-button:focus-visible { outline: 2px solid #7668f1; outline-offset: 2px; }
+.app-canvas[data-crypto-theme="dark"] .profile-topbar .coin-rain-button,
+.app-canvas[data-crypto-theme="dark"] .market-topbar .coin-rain-button {
+  color: #a79cff;
+  border-color: var(--border-color);
+  background: var(--card-background);
+}
+.coin-rain { position: absolute; z-index: 30; inset: 0; overflow: hidden; pointer-events: none; }
+.coin-rain__coin {
+  position: absolute;
+  top: -42px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: #8c5405;
+  border: 2px solid #ffe09a;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #fff0ad, #ffc044 55%, #e88c19);
+  box-shadow: 0 4px 12px rgba(113, 68, 12, .25), inset 0 1px 2px rgba(255, 255, 255, .65);
+  animation: coin-rain-fall linear both;
+}
+@keyframes coin-rain-fall {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(-20deg); }
+  12% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--coin-drift), 950px, 0) rotate(540deg); }
+}
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@media (prefers-reduced-motion: reduce) { .coin-rain { display: none; } .coin-rain-button { transition: none; } }
 .app-canvas[data-crypto-theme="dark"] .asset-heading div > span,
 .app-canvas[data-crypto-theme="dark"] .asset-current > span,
 .app-canvas[data-crypto-theme="dark"] .asset-current > small,

@@ -23,6 +23,7 @@ import {
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { api } from "./api";
+import { CoinRainButton } from "./CoinRainButton";
 import { robotAssets } from "./robot";
 import { useTheme, type Theme } from "./theme";
 import type { CareerOverview, Course, ProfileData } from "./types";
@@ -57,7 +58,7 @@ export function ProfilePage() {
 
   return (
     <div className="full-profile-page">
-      <header className="profile-topbar"><NavLink to="/" aria-label="На главную"><ArrowLeft size={19}/></NavLink><strong>Мой профиль</strong><span><Sparkles size={17}/></span></header>
+      <header className="profile-topbar"><NavLink to="/" aria-label="На главную"><ArrowLeft size={19}/></NavLink><strong>Мой профиль</strong><CoinRainButton/></header>
       <ProfileHero data={data}/>
       <ProfileStats data={data}/>
       <AppearanceSettings theme={theme} setTheme={setTheme}/>

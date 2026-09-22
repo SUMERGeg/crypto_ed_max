@@ -17,6 +17,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
 import { api } from "./api";
+import { CoinRainButton } from "./CoinRainButton";
 import { buildChartGeometry, nearestChartPoint } from "./market-chart";
 import { robotAssets } from "./robot";
 import type { MarketAsset, MarketAssetDetail, MarketAssetList, MarketNewsArticle, MarketNewsSummary, MarketPeriod } from "./types";
@@ -306,7 +307,7 @@ function ArticleSection({ number, title, text }: { number: string; title: string
 }
 
 function MarketTopBar({ onBack, title }: { onBack: () => void; title: string }) {
-  return <header className="market-topbar"><button onClick={onBack} aria-label="Назад"><ArrowLeft size={19}/></button><strong>{title}</strong><span><Sparkles size={16}/></span></header>;
+  return <header className="market-topbar"><button onClick={onBack} aria-label="Назад"><ArrowLeft size={19}/></button><strong>{title}</strong><CoinRainButton/></header>;
 }
 
 function MarketError({ retry }: { retry: () => void }) {
