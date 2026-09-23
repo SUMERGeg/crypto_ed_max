@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { test } from "node:test";
 import { getHome, getLesson, getQuizByLesson, initializeLearningState, lessons, openLesson } from "./data.js";
 import type { ProgressRepository, ProgressSnapshot, QuizAttemptRecord } from "./persistence.js";
@@ -78,5 +79,31 @@ test("Russia and law is five sequential lessons with full pages and six-question
     assert.ok(lesson.pages.every((page) => page.kind !== "CONTENT" || page.body.trim().split(/\n\s*\n/).length >= 2));
     assert.equal(quiz?.questions.length, 6);
     assert.ok(lessons.find((item) => item.id === id)?.quiz.questions.every((question) => question.options.filter((option) => option.isCorrect).length === 1));
+  }
+});
+
+test("every Russia and law screen exposes its matching WebP illustration", async () => {
+  await initializeLearningState(new TestProgressRepository());
+  const learner = { id: "max:law-images", displayName: "Ирина" };
+  const pageCounts = new Map([
+    ["law-status", 7],
+    ["law-taxes", 7],
+    ["law-payments", 8],
+    ["law-mining", 7],
+    ["law-safe-check", 7],
+  ]);
+
+  for (const [id, count] of pageCounts) {
+    const lesson = await getLesson(id, learner);
+    assert.ok(lesson);
+    assert.equal(lesson.pages.length, count);
+    for (const [index, page] of lesson.pages.entries()) {
+      assert.equal(page.kind, "CONTENT");
+      if (page.kind !== "CONTENT") continue;
+      const expected = "/assets/lessons/russia-law/" + id + "-step-" + String(index + 1).padStart(2, "0") + ".webp";
+      assert.equal(page.illustration?.src, expected);
+      assert.ok(page.illustration?.alt);
+      assert.ok(existsSync(new URL("../../web/public" + expected, import.meta.url)));
+    }
   }
 });

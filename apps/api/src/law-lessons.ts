@@ -262,4 +262,13 @@ export const lawLessonSpecs: CryptoLessonSpec[] = [
       question("law-safe-check-6", "Когда особенно разумно обратиться к специалисту?", "При крупных суммах, зарубежных площадках или сложной истории операций", "Только если сайт не открывается с первого раза", "Никогда, ведь краткий урок заменяет консультацию", "Сложные факты и документы требуют индивидуального разбора."),
     ],
   },
-];
+].map((lesson) => ({
+  ...lesson,
+  pages: lesson.pages.map((entry, index) => ({
+    ...entry,
+    illustration: {
+      src: "/assets/lessons/russia-law/" + lesson.id + "-step-" + String(index + 1).padStart(2, "0") + ".webp",
+      alt: "Робот-помощник показывает: " + entry.title,
+    },
+  })),
+}));
