@@ -21,6 +21,7 @@ import {
 import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
 import { api } from "./api";
+import { careerRoleIconFor } from "./career-role-icon";
 import { robotAssets } from "./robot";
 import type { CareerAttempt, CareerOverview, CareerResult, CareerRole } from "./types";
 
@@ -99,11 +100,7 @@ export function CareerLandingPage() {
         <div className="career-section__heading"><span>Не только разработка</span><h2>Какие направления сравниваем</h2></div>
         <div className="career-role-preview">
           {data.roles.map((role) => (
-            <NavLink to={`/career/roles/${role.id}`} key={role.id}>
-              <i style={{ background: role.accent }}><BriefcaseBusiness/></i>
-              <div><strong>{role.title}</strong><small>{role.shortDescription}</small></div>
-              <ChevronRight/>
-            </NavLink>
+            <CareerRoleLink key={role.id} role={role}/>
           ))}
         </div>
       </section>
@@ -117,6 +114,15 @@ export function CareerLandingPage() {
       </section>
     </div>
   );
+}
+
+function CareerRoleLink({ role }: { role: CareerRole }) {
+  const RoleIcon = careerRoleIconFor(role.id);
+  return <NavLink to={`/career/roles/${role.id}`}>
+    <i style={{ background: role.accent }}><RoleIcon/></i>
+    <div><strong>{role.title}</strong><small>{role.shortDescription}</small></div>
+    <ChevronRight/>
+  </NavLink>;
 }
 
 function LatestCareerResult({ result }: { result: NonNullable<CareerOverview["latestResult"]> }) {
@@ -298,11 +304,12 @@ export function CareerRolePage() {
 }
 
 function CareerRoleView({ role }: { role: CareerRole }) {
+  const RoleIcon = careerRoleIconFor(role.id);
   return (
     <div className="career-page career-role-page">
       <CareerTopbar title="Профессия" backTo="/career" />
       <section className="career-role-hero" style={{ "--role-accent": role.accent } as CSSProperties}>
-        <i><BriefcaseBusiness/></i><span>Направление в криптоиндустрии</span><h1>{role.title}</h1><p>{role.shortDescription}</p>
+        <i><RoleIcon/></i><span>Направление в криптоиндустрии</span><h1>{role.title}</h1><p>{role.shortDescription}</p>
       </section>
       {role.disclaimer && <div className="career-investor-warning"><ShieldAlert/>{role.disclaimer}</div>}
       <RoleSection icon={<ListChecks/>} title="Что делают каждый день" items={role.dailyTasks}/>
