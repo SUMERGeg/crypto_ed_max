@@ -56,7 +56,7 @@ export function CoinRainButton() {
             const slot = (index * 5 + burst.id * 3) % COIN_COUNT;
             const targetX = 24 + (slot + .5) * (Math.max(0, burst.width - 48) / COIN_COUNT);
             const distance = targetX - burst.x;
-            const apex = Math.min(65 + (index * 19 + burst.id * 11) % 75, Math.max(0, burst.y - 28));
+            const apex = burst.y * .45 + 12 + (index * 19 + burst.id * 11) % 22;
             return <span
               className="coin-rain__coin"
               key={`${burst.id}-${index}`}
