@@ -9,6 +9,7 @@ type CoinBurst = {
   id: number;
   x: number;
   y: number;
+  width: number;
   fall: number;
 };
 
@@ -35,7 +36,7 @@ export function CoinRainButton() {
     const y = buttonRect.top - shellRect.top + buttonRect.height / 2;
     const id = nextBurstId.current++;
     setShell(container);
-    setBursts((current) => [...current, { id, x, y, fall: shellRect.height - y + 36 }]);
+    setBursts((current) => [...current, { id, x, y, width: shellRect.width, fall: shellRect.height - y + 36 }]);
 
     const timeout = window.setTimeout(() => {
       setBursts((current) => current.filter((burst) => burst.id !== id));
@@ -52,9 +53,10 @@ export function CoinRainButton() {
       {bursts.length > 0 && shell && createPortal(
         <div className="coin-rain" aria-hidden="true">
           {bursts.flatMap((burst) => Array.from({ length: COIN_COUNT }, (_, index) => {
-            const spread = (index + .5) / COIN_COUNT;
-            const direction = spread * 2 - 1;
-            const distance = direction * (85 + (index * 23 + burst.id * 17) % 95);
+            const slot = (index * 5 + burst.id * 3) % COIN_COUNT;
+            const targetX = 24 + (slot + .5) * (Math.max(0, burst.width - 48) / COIN_COUNT);
+            const distance = targetX - burst.x;
+            const apex = Math.min(65 + (index * 19 + burst.id * 11) % 75, Math.max(0, burst.y - 28));
             return <span
               className="coin-rain__coin"
               key={`${burst.id}-${index}`}
@@ -64,9 +66,9 @@ export function CoinRainButton() {
                 animationDelay: `${(index * 47 + burst.id * 13) % 140}ms`,
                 animationDuration: `${1350 + (index * 71) % 280}ms`,
                 "--coin-x": `${distance}px`,
-                "--coin-apex": `${-65 - (index * 19 + burst.id * 11) % 75}px`,
+                "--coin-apex": `${-apex}px`,
                 "--coin-fall": `${burst.fall}px`,
-                "--coin-spin": `${direction < 0 ? -1 : 1}turn`,
+                "--coin-spin": `${distance < 0 ? -1 : 1}turn`,
               } as CSSProperties}
             >
               <Bitcoin size={18} strokeWidth={2.7} />
