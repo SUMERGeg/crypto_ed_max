@@ -56,7 +56,9 @@ export function CoinRainButton() {
             const slot = (index * 5 + burst.id * 3) % COIN_COUNT;
             const targetX = 24 + (slot + .5) * (Math.max(0, burst.width - 48) / COIN_COUNT);
             const distance = targetX - burst.x;
-            const apex = burst.y * .45 + 12 + (index * 19 + burst.id * 11) % 22;
+            const upwardReach = Math.min(45, burst.y * .7 + 10);
+            const launchDirection = ((index * 9 + burst.id * 5) % COIN_COUNT) / (COIN_COUNT - 1);
+            const launchY = -upwardReach + launchDirection * (upwardReach + 105);
             return <span
               className="coin-rain__coin"
               key={`${burst.id}-${index}`}
@@ -66,7 +68,7 @@ export function CoinRainButton() {
                 animationDelay: `${(index * 47 + burst.id * 13) % 140}ms`,
                 animationDuration: `${1350 + (index * 71) % 280}ms`,
                 "--coin-x": `${distance}px`,
-                "--coin-apex": `${-apex}px`,
+                "--coin-launch-y": `${launchY}px`,
                 "--coin-fall": `${burst.fall}px`,
                 "--coin-spin": `${distance < 0 ? -1 : 1}turn`,
               } as CSSProperties}

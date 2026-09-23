@@ -786,7 +786,7 @@ a { color: inherit; text-decoration: none; }
 @keyframes coin-rain-burst {
   0% { opacity: 0; transform: translate3d(0, 0, 0) scale(.4) rotate(0); animation-timing-function: cubic-bezier(.18,.7,.3,1); }
   8% { opacity: 1; }
-  34% { opacity: 1; transform: translate3d(calc(var(--coin-x) * .7), var(--coin-apex), 0) scale(1.08) rotate(calc(var(--coin-spin) * .4)); animation-timing-function: cubic-bezier(.45,0,.85,.55); }
+  34% { opacity: 1; transform: translate3d(calc(var(--coin-x) * .7), var(--coin-launch-y), 0) scale(1.08) rotate(calc(var(--coin-spin) * .4)); animation-timing-function: cubic-bezier(.45,0,.85,.55); }
   85% { opacity: 1; }
   100% { opacity: 0; transform: translate3d(var(--coin-x), var(--coin-fall), 0) scale(.85) rotate(var(--coin-spin)); }
 }
