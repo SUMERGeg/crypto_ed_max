@@ -771,23 +771,24 @@ a { color: inherit; text-decoration: none; }
 .coin-rain { position: absolute; z-index: 30; inset: 0; overflow: hidden; pointer-events: none; }
 .coin-rain__coin {
   position: absolute;
-  top: -42px;
   display: grid;
   place-items: center;
   width: 30px;
   height: 30px;
+  margin: -15px 0 0 -15px;
   color: #8c5405;
   border: 2px solid #ffe09a;
   border-radius: 50%;
   background: linear-gradient(145deg, #fff0ad, #ffc044 55%, #e88c19);
   box-shadow: 0 4px 12px rgba(113, 68, 12, .25), inset 0 1px 2px rgba(255, 255, 255, .65);
-  animation: coin-rain-fall linear both;
+  animation: coin-rain-burst both;
 }
-@keyframes coin-rain-fall {
-  0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(-20deg); }
-  12% { opacity: 1; }
-  80% { opacity: 1; }
-  100% { opacity: 0; transform: translate3d(var(--coin-drift), 950px, 0) rotate(540deg); }
+@keyframes coin-rain-burst {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) scale(.4) rotate(0); animation-timing-function: cubic-bezier(.18,.7,.3,1); }
+  8% { opacity: 1; }
+  34% { opacity: 1; transform: translate3d(calc(var(--coin-x) * .7), var(--coin-apex), 0) scale(1.08) rotate(calc(var(--coin-spin) * .4)); animation-timing-function: cubic-bezier(.45,0,.85,.55); }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--coin-x), var(--coin-fall), 0) scale(.85) rotate(var(--coin-spin)); }
 }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 @media (prefers-reduced-motion: reduce) { .coin-rain { display: none; } .coin-rain-button { transition: none; } }

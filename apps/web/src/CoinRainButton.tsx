@@ -5,50 +5,77 @@ import { createPortal } from "react-dom";
 const COIN_COUNT = 14;
 const EFFECT_DURATION_MS = 1900;
 
+type CoinBurst = {
+  id: number;
+  x: number;
+  y: number;
+  fall: number;
+};
+
 export function CoinRainButton() {
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const timeoutRef = useRef<number | null>(null);
+  const nextBurstId = useRef(0);
+  const timeoutRefs = useRef<Set<number>>(new Set());
   const [shell, setShell] = useState<Element | null>(null);
-  const [run, setRun] = useState(0);
-  const [active, setActive] = useState(false);
+  const [bursts, setBursts] = useState<CoinBurst[]>([]);
 
   useEffect(() => () => {
-    if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current);
+    timeoutRefs.current.forEach((timeout) => window.clearTimeout(timeout));
+    timeoutRefs.current.clear();
   }, []);
 
-  function startRain() {
-    setShell(buttonRef.current?.closest(".phone-shell") ?? null);
-    setRun((current) => current + 1);
-    setActive(true);
-    if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current);
-    timeoutRef.current = window.setTimeout(() => setActive(false), EFFECT_DURATION_MS);
+  function startBurst() {
+    const button = buttonRef.current;
+    const container = button?.closest(".phone-shell");
+    if (!button || !container || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const buttonRect = button.getBoundingClientRect();
+    const shellRect = container.getBoundingClientRect();
+    const x = buttonRect.left - shellRect.left + buttonRect.width / 2;
+    const y = buttonRect.top - shellRect.top + buttonRect.height / 2;
+    const id = nextBurstId.current++;
+    setShell(container);
+    setBursts((current) => [...current, { id, x, y, fall: shellRect.height - y + 36 }]);
+
+    const timeout = window.setTimeout(() => {
+      setBursts((current) => current.filter((burst) => burst.id !== id));
+      timeoutRefs.current.delete(timeout);
+    }, EFFECT_DURATION_MS);
+    timeoutRefs.current.add(timeout);
   }
 
   return (
     <>
-      <button ref={buttonRef} className="coin-rain-button" type="button" onClick={startRain} aria-label="Запустить дождь из биткоинов" title="Нажми на меня">
+      <button ref={buttonRef} className="coin-rain-button" type="button" onClick={startBurst} aria-label="Запустить фейерверк из биткоинов" title="Нажми на меня">
         <Sparkles size={17} aria-hidden="true" />
       </button>
-      {active && shell && createPortal(
-        <div className="coin-rain" key={run} aria-hidden="true">
-          {Array.from({ length: COIN_COUNT }, (_, index) => (
-            <span
+      {bursts.length > 0 && shell && createPortal(
+        <div className="coin-rain" aria-hidden="true">
+          {bursts.flatMap((burst) => Array.from({ length: COIN_COUNT }, (_, index) => {
+            const spread = (index + .5) / COIN_COUNT;
+            const direction = spread * 2 - 1;
+            const distance = direction * (85 + (index * 23 + burst.id * 17) % 95);
+            return <span
               className="coin-rain__coin"
-              key={index}
+              key={`${burst.id}-${index}`}
               style={{
-                left: `${6 + ((index * 37 + run * 13) % 88)}%`,
-                animationDelay: `${(index * 127) % 600}ms`,
-                animationDuration: `${1100 + ((index * 173) % 480)}ms`,
-                "--coin-drift": `${(index % 2 ? 1 : -1) * (12 + ((index * 7) % 24))}px`,
+                left: burst.x,
+                top: burst.y,
+                animationDelay: `${(index * 47 + burst.id * 13) % 140}ms`,
+                animationDuration: `${1350 + (index * 71) % 280}ms`,
+                "--coin-x": `${distance}px`,
+                "--coin-apex": `${-65 - (index * 19 + burst.id * 11) % 75}px`,
+                "--coin-fall": `${burst.fall}px`,
+                "--coin-spin": `${direction < 0 ? -1 : 1}turn`,
               } as CSSProperties}
             >
               <Bitcoin size={18} strokeWidth={2.7} />
-            </span>
-          ))}
+            </span>;
+          }))}
         </div>,
         shell,
       )}
-      <span className="visually-hidden" role="status">{active ? "Биткоины сыплются!" : ""}</span>
+      <span className="visually-hidden" role="status">{bursts.length > 0 ? "Биткоины разлетаются!" : ""}</span>
     </>
   );
 }
