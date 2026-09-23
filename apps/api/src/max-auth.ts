@@ -4,6 +4,8 @@ export type AppUser = { id: string; displayName: string };
 
 const LAUNCH_TTL_SECONDS = 3600;
 const SESSION_TTL_SECONDS = 12 * 3600;
+const GUEST_SESSION_TTL_SECONDS = 30 * 86400;
+const GUEST_ID_PATTERN = /^guest:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 
 function equalHex(left: string, right: string) {
   if (!/^[a-f0-9]{64}$/i.test(left) || !/^[a-f0-9]{64}$/i.test(right)) return false;
@@ -42,8 +44,8 @@ export function verifyMaxInitData(initData: string, botToken: string, nowSeconds
   }
 }
 
-function sessionSignature(payload: string, botToken: string) {
-  const key = createHmac("sha256", "CryptoEducationMaxSession").update(botToken).digest();
+function sessionSignature(payload: string, botToken: string, purpose = "CryptoEducationMaxSession") {
+  const key = createHmac("sha256", purpose).update(botToken).digest();
   return createHmac("sha256", key).update(payload).digest("hex");
 }
 
@@ -67,7 +69,28 @@ export function verifyMaxSession(session: string, botToken: string, nowSeconds =
   }
 }
 
+export function createGuestSession(guestId: string, botToken: string, nowSeconds = Math.floor(Date.now() / 1000)) {
+  if (!GUEST_ID_PATTERN.test(guestId) || !botToken) throw new Error("Invalid guest session details");
+  const payload = Buffer.from(JSON.stringify({ id: guestId, exp: nowSeconds + GUEST_SESSION_TTL_SECONDS })).toString("base64url");
+  return `${payload}.${sessionSignature(payload, botToken, "CryptoEducationGuestSession")}`;
+}
+
+export function verifyGuestSession(session: string, botToken: string, nowSeconds = Math.floor(Date.now() / 1000)): AppUser | null {
+  if (!session || !botToken || session.length > 2048) return null;
+  const parts = session.split(".");
+  if (parts.length !== 2 || !equalHex(parts[1]!, sessionSignature(parts[0]!, botToken, "CryptoEducationGuestSession"))) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(parts[0]!, "base64url").toString("utf8")) as Record<string, unknown>;
+    if (typeof payload.id !== "string" || !GUEST_ID_PATTERN.test(payload.id)) return null;
+    if (typeof payload.exp !== "number" || !Number.isSafeInteger(payload.exp) || payload.exp <= nowSeconds || payload.exp > nowSeconds + GUEST_SESSION_TTL_SECONDS) return null;
+    return { id: payload.id, displayName: "Гость" };
+  } catch {
+    return null;
+  }
+}
+
 export function resolveApiUser(authorization: string | undefined, botToken: string, nowSeconds = Math.floor(Date.now() / 1000)): AppUser | null {
   if (!authorization?.startsWith("Bearer ")) return null;
-  return verifyMaxSession(authorization.slice(7), botToken, nowSeconds);
+  const session = authorization.slice(7);
+  return verifyMaxSession(session, botToken, nowSeconds) ?? verifyGuestSession(session, botToken, nowSeconds);
 }

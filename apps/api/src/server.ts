@@ -1,4 +1,5 @@
 import express, { type Response } from "express";
+import { randomUUID } from "node:crypto";
 import { loadEnvFile } from "node:process";
 import { fileURLToPath } from "node:url";
 import {
@@ -41,7 +42,7 @@ import {
   saveCareerAnswer,
 } from "./career-data.js";
 import { createCareerRepository } from "./career-persistence.js";
-import { createMaxSession, resolveApiUser, verifyMaxInitData, type AppUser } from "./max-auth.js";
+import { createGuestSession, createMaxSession, resolveApiUser, verifyGuestSession, verifyMaxInitData, type AppUser } from "./max-auth.js";
 import { createOnboardingRepository, type OnboardingStatus } from "./onboarding-persistence.js";
 
 try {
@@ -86,6 +87,18 @@ app.post("/api/v1/auth/max", async (request, response) => {
   }
   await progressRepository.getSnapshot(currentUser.id, currentUser.displayName);
   response.set("Cache-Control", "no-store").json({ accessToken: createMaxSession(currentUser, botToken), user: currentUser });
+});
+
+app.post("/api/v1/auth/guest", async (request, response) => {
+  if (!botToken) {
+    response.status(503).json({ message: "Guest access is not configured" });
+    return;
+  }
+  const authorization = request.header("Authorization");
+  const existing = authorization?.startsWith("Bearer ") ? verifyGuestSession(authorization.slice(7), botToken) : null;
+  const currentUser = existing ?? { id: `guest:${randomUUID()}`, displayName: "Гость" };
+  await progressRepository.getSnapshot(currentUser.id, currentUser.displayName);
+  response.set("Cache-Control", "no-store").json({ accessToken: createGuestSession(currentUser.id, botToken), user: currentUser });
 });
 
 app.use("/api/v1", (request, response, next) => {

@@ -46,6 +46,13 @@ export const api = {
     if (!response.ok) throw new Error(`MAX sign-in failed: ${response.status}`);
     return response.json() as Promise<{ accessToken: string; user: { id: string; displayName: string } }>;
   },
+  signInGuest: async (previousToken?: string) => {
+    const response = await fetch("/api/v1/auth/guest", {
+      method: "POST", headers: previousToken ? { Authorization: `Bearer ${previousToken}` } : {},
+    });
+    if (!response.ok) throw new Error(`Guest sign-in failed: ${response.status}`);
+    return response.json() as Promise<{ accessToken: string; user: { id: string; displayName: string } }>;
+  },
   home: (signal?: AbortSignal) => getJson<HomeData>("/home", signal),
   courses: (signal?: AbortSignal) => getJson<Course[]>("/courses", signal),
   courseLessons: async (courseId: string, signal?: AbortSignal): Promise<CourseLessons> => {

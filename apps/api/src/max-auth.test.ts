@@ -45,3 +45,14 @@ test("API accepts only a valid bearer session in MAX mode", async () => {
   assert.equal(auth.resolveApiUser(undefined, token, now + 60), null);
   assert.equal(auth.resolveApiUser("Bearer forged", token, now + 60), null);
 });
+
+test("guest sessions are isolated from MAX identities and reject tampering or expiry", async () => {
+  const auth = await import("./max-auth.js");
+  const guestId = "guest:00000000-0000-4000-8000-000000000001";
+  const session = auth.createGuestSession(guestId, token, now);
+  assert.deepEqual(auth.resolveApiUser(`Bearer ${session}`, token, now + 60), { id: guestId, displayName: "Гость" });
+  assert.equal(auth.verifyMaxSession(session, token, now + 60), null);
+  assert.equal(auth.resolveApiUser(`Bearer ${session}changed`, token, now + 60), null);
+  assert.equal(auth.resolveApiUser(`Bearer ${session}`, token, now + 31 * 86400), null);
+  assert.throws(() => auth.createGuestSession("max:421", token, now));
+});

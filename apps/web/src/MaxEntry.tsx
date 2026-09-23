@@ -2,6 +2,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { api, setApiAccessToken } from "./api";
 import { currentMaxLaunchData } from "./max-client";
 
+const GUEST_TOKEN_KEY = "crypto-education-guest-token";
+
 export function MaxEntry({ children }: { children: ReactNode }) {
   const [state, setState] = useState<"loading" | "ready" | "max-required" | "error">("loading");
 
@@ -18,7 +20,13 @@ export function MaxEntry({ children }: { children: ReactNode }) {
           return;
         }
         if (!launchData) {
-          setState("max-required");
+          let previousToken = "";
+          try { previousToken = window.localStorage.getItem(GUEST_TOKEN_KEY) ?? ""; } catch { /* Storage may be unavailable. */ }
+          const session = await api.signInGuest(previousToken);
+          if (!active) return;
+          try { window.localStorage.setItem(GUEST_TOKEN_KEY, session.accessToken); } catch { /* Guest access still works for this visit. */ }
+          setApiAccessToken(session.accessToken, session.user.id);
+          setState("ready");
           return;
         }
         const session = await api.signInMax(launchData);
