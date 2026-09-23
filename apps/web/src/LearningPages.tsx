@@ -157,6 +157,8 @@ function minuteWord(count: number) {
 export function LessonPage() {
   const { lessonId = "" } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromRoute = new URLSearchParams(location.search).get("from") === "route";
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [current, setCurrent] = useState(0);
   const [checkpointAnswers, setCheckpointAnswers] = useState<Record<string, string>>({});
@@ -208,7 +210,7 @@ export function LessonPage() {
 
   return (
     <div className="page page--light page--flow lesson-page">
-      <FlowTopBar title="Урок" onBack={() => lesson ? navigate(`/learn/${lesson.courseId}`) : navigate("/learn")} />
+      <FlowTopBar title="Урок" onBack={() => fromRoute ? navigate("/route") : lesson ? navigate(`/learn/${lesson.courseId}`) : navigate("/learn")} />
       {error ? <FlowError /> : !lesson || !page ? <FlowLoading /> : (
         <>
           <div className="lesson-flow-progress" aria-label={`Этап ${current + 1} из ${lesson.pages.length}`}>
@@ -275,7 +277,7 @@ export function LessonPage() {
           <div className="lesson-flow-actions">
             <button type="button" className="secondary-cta" disabled={current === 0} onClick={() => moveTo(current - 1)}>Назад</button>
             {isLastPage ? (
-              <Link className="primary-cta" to={`/lessons/${lesson.id}/quiz`}>Итоговый тест <ArrowRight size={19} /></Link>
+              <Link className="primary-cta" to={`/lessons/${lesson.id}/quiz${fromRoute ? "?from=route" : ""}`}>Итоговый тест <ArrowRight size={19} /></Link>
             ) : (
               <button type="button" className="primary-cta" disabled={page.kind === "CHECKPOINT" && !selectedCheckpointAnswer} onClick={() => moveTo(current + 1)}>Далее <ArrowRight size={19} /></button>
             )}
@@ -289,6 +291,7 @@ export function LessonPage() {
 export function QuizPage() {
   const { lessonId = "" } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -317,7 +320,7 @@ export function QuizPage() {
     const payload: QuizAnswer[] = quiz.questions.map((item) => ({ questionId: item.id, optionIds: [answers[item.id]!] }));
     try {
       const result = await api.submitQuiz(quiz.id, payload);
-      navigate("/quiz/result", { replace: true, state: { result, lessonTitle: quiz.lessonTitle } });
+      navigate(`/quiz/result${location.search}`, { replace: true, state: { result, lessonTitle: quiz.lessonTitle } });
     } catch {
       setError(true);
       setSubmitting(false);
@@ -326,7 +329,7 @@ export function QuizPage() {
 
   return (
     <div className="page page--light page--flow quiz-page">
-      <FlowTopBar title="Итоговый тест" onBack={() => navigate(`/lessons/${lessonId}`)} />
+      <FlowTopBar title="Итоговый тест" onBack={() => navigate(`/lessons/${lessonId}${location.search}`)} />
       {error ? <FlowError /> : !quiz || !question ? <FlowLoading /> : (
         <>
           <div className="quiz-progress-row">
@@ -373,6 +376,7 @@ type ResultState = { result: QuizResult; lessonTitle: string };
 export function QuizResultPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const fromRoute = new URLSearchParams(location.search).get("from") === "route";
   const state = location.state as ResultState | null;
 
   if (!state) {
@@ -385,7 +389,7 @@ export function QuizResultPage() {
 
   return (
     <div className="page page--light page--flow result-page">
-      <FlowTopBar title="Результат" onBack={() => navigate(`/learn/${result.courseId}`)} />
+      <FlowTopBar title="Результат" onBack={() => navigate(fromRoute ? "/route" : `/learn/${result.courseId}`)} />
       <section className="result-hero">
         <div className="result-orbit"><span>{result.scorePercent}%</span><img src={result.passed ? robotAssets.celebrating : robotAssets.thinking} alt={result.passed ? "Робот празднует результат" : "Робот помогает разобрать ошибки"} /></div>
         <span className="result-eyebrow">{result.passed ? "Итоговый тест пройден" : `Нужно не меньше ${result.passingScorePercent}%`}</span>
@@ -419,9 +423,10 @@ export function QuizResultPage() {
       )}
 
       <div className="result-actions">
-        {result.nextLessonId && result.passed && <button className="primary-cta primary-cta--button" type="button" onClick={() => navigate(`/lessons/${result.nextLessonId}`)}>Следующий урок <ArrowRight size={18} /></button>}
-        {!result.passed && <button className="primary-cta primary-cta--button" type="button" onClick={() => navigate(`/lessons/${result.lessonId}`)}>Повторить материал <BookOpen size={18} /></button>}
-        <button className="secondary-wide" type="button" onClick={() => navigate(`/lessons/${result.lessonId}/quiz`, { replace: true })}><RotateCcw size={17} /> Пройти ещё раз</button>
+        {fromRoute && result.passed && <button className="primary-cta primary-cta--button" type="button" onClick={() => navigate("/route")}>Остановка пройдена · к маршруту <ArrowRight size={18}/></button>}
+        {!fromRoute && result.nextLessonId && result.passed && <button className="primary-cta primary-cta--button" type="button" onClick={() => navigate(`/lessons/${result.nextLessonId}`)}>Следующий урок <ArrowRight size={18} /></button>}
+        {!result.passed && <button className="primary-cta primary-cta--button" type="button" onClick={() => navigate(`/lessons/${result.lessonId}${location.search}`)}>Повторить материал <BookOpen size={18} /></button>}
+        <button className="secondary-wide" type="button" onClick={() => navigate(`/lessons/${result.lessonId}/quiz${location.search}`, { replace: true })}><RotateCcw size={17} /> Пройти ещё раз</button>
         <Link to={`/learn/${result.courseId}`}>Вернуться к направлению</Link>
       </div>
     </div>

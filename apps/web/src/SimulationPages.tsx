@@ -24,7 +24,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { NavLink, useNavigate, useParams } from "react-router-dom";
+import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { api } from "./api";
 import { robotAssets } from "./robot";
 import type { ScenarioSummary, SimulationEvent, SimulationResult, SimulationState } from "./types";
@@ -163,6 +163,7 @@ function ScenarioCard({ scenario }: { scenario: ScenarioSummary }) {
 export function ScenarioIntroPage() {
   const { scenarioId = "" } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [scenario, setScenario] = useState<ScenarioSummary | null>(null);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
@@ -177,7 +178,7 @@ export function ScenarioIntroPage() {
     setError("");
     try {
       const state = await api.createSimulation(scenario.id);
-      navigate(`/simulation/${state.sessionId}`);
+      navigate(`/simulation/${state.sessionId}${location.search}`);
     } catch {
       setError("Не удалось начать. Проверь локальный API.");
       setStarting(false);
@@ -222,6 +223,7 @@ function FlowBack() {
 export function ReplayPage() {
   const { sessionId = "" } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [state, setState] = useState<SimulationState | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState("BTC");
   const [tradeMode, setTradeMode] = useState<"BUY" | "SELL">("BUY");
@@ -259,7 +261,7 @@ export function ReplayPage() {
 
   const complete = async () => {
     setBusy(true); setMessage("");
-    try { await api.completeSimulation(sessionId); navigate(`/simulation/${sessionId}/result`); }
+    try { await api.completeSimulation(sessionId); navigate(`/simulation/${sessionId}/result${location.search}`); }
     catch { setMessage("Пока рано завершать период"); setBusy(false); }
   };
 
@@ -275,7 +277,7 @@ export function ReplayPage() {
   return (
     <div className="replay-page">
       <header className="replay-top">
-        <button onClick={() => navigate("/practice")} aria-label="Выйти"><ArrowLeft size={19} /></button>
+        <button onClick={() => navigate(new URLSearchParams(location.search).get("from") === "route" ? "/route" : "/practice")} aria-label="Выйти"><ArrowLeft size={19} /></button>
         <div><span>Историческое время</span><strong>{replayDate.format(new Date(state.scenarioAt))}</strong></div>
         <button onClick={() => state.status === "ACTIVE" ? void act(() => api.pauseSimulation(sessionId)) : void act(() => api.resumeSimulation(sessionId))} aria-label={state.status === "ACTIVE" ? "Пауза" : "Продолжить"}>
           {state.status === "ACTIVE" ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
@@ -361,6 +363,7 @@ function PriceChart({ series, color, events }: { series: Array<{ at: string; pri
 export function ReplayResultPage() {
   const { sessionId = "" } = useParams();
   const navigate = useNavigate();
+  const fromRoute = new URLSearchParams(useLocation().search).get("from") === "route";
   const [state, setState] = useState<SimulationState | null>(null);
   const [result, setResult] = useState<SimulationResult | null>(null);
 
@@ -386,6 +389,7 @@ export function ReplayResultPage() {
       <section className="analysis-list"><span className="eyebrow">Персональный разбор</span><h2>Что можно заметить</h2>{result.analysis.map((note, index) => <article key={note.kind}><i>{index + 1}</i><div><strong>{note.title}</strong><p>{note.text}</p></div></article>)}</section>
       <DecisionHistory decisions={result.decisions} />
       <aside className="result-learning"><Sparkles size={20} /><div><strong>Главная мысль</strong><p>Рост рынка сам по себе не делает каждую сделку удачной. Важно заранее понимать риск и не принимать прошлый результат за обещание.</p></div></aside>
+      {fromRoute && <button className="primary-cta" onClick={() => navigate("/route")}><CheckCircle2 size={17}/> Остановка пройдена · к маршруту</button>}
       <button className="primary-cta" onClick={() => navigate("/practice")}><RefreshCcw size={17} /> Пройти ещё раз</button>
       <NavLink className="result-home-link" to="/">Вернуться на главную</NavLink>
       <p className="intro-disclaimer">Учебный материал. Не инвестиционная рекомендация.</p>

@@ -61,6 +61,7 @@ export function ProfilePage() {
       <header className="profile-topbar"><NavLink to="/" aria-label="На главную"><ArrowLeft size={19}/></NavLink><strong>Мой профиль</strong><CoinRainButton/></header>
       <ProfileHero data={data}/>
       <ProfileStats data={data}/>
+      <RecommendedRouteSummary/>
       <AppearanceSettings theme={theme} setTheme={setTheme}/>
       <OnboardingSummary/>
       <CareerCompassSummary/>
@@ -74,6 +75,30 @@ export function ProfilePage() {
       <p className="profile-note">В профиле хранится только учебная активность. Реальных счетов, кошельков и финансовых данных здесь нет.</p>
     </div>
   );
+}
+
+function RecommendedRouteSummary() {
+  const [route, setRoute] = useState<Awaited<ReturnType<typeof api.route>> | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [revision, setRevision] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    api.route(controller.signal).then((data) => { setRoute(data); setFailed(false); }).catch((reason: unknown) => {
+      if (reason instanceof DOMException && reason.name === "AbortError") return;
+      setFailed(true);
+    });
+    return () => controller.abort();
+  }, [revision]);
+  const current = route?.currentIndex === null ? null : route?.stops[route.currentIndex ?? 0];
+  return <section className="profile-section profile-route-section">
+    <ProfileHeading eyebrow="Учись шаг за шагом" title="Рекомендованный маршрут"/>
+    <NavLink className="profile-route-card" to="/route">
+      <span className="profile-route-card__art" aria-hidden="true"><i/><i/><i/><img src={robotAssets.waving} alt=""/></span>
+      <span className="profile-route-card__copy"><small>{failed ? "Не удалось загрузить прогресс" : route ? `${route.completedCount} из ${route.total} остановок` : "Загружаем маршрут…"}</small><strong>{route?.finished ? "Весь путь пройден" : current?.title ?? "Уроки, кейсы и практика"}</strong><em>{failed ? "Открой маршрут или повтори загрузку" : "Прокручивай дорогу и открывай новые главы"}</em></span>
+      <ChevronRight size={17}/>
+    </NavLink>
+    {failed && <button type="button" className="profile-route-retry" onClick={() => { setFailed(false); setRevision((value) => value + 1); }}>Повторить загрузку</button>}
+  </section>;
 }
 
 function OnboardingSummary() {

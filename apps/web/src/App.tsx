@@ -42,6 +42,7 @@ const MarketPage = lazyPage(() => import("./MarketPages"), "MarketPage");
 const MarketNewsPage = lazyPage(() => import("./MarketPages"), "MarketNewsPage");
 const MarketAssetPage = lazyPage(() => import("./MarketPages"), "MarketAssetPage");
 const ProfilePage = lazyPage(() => import("./ProfilePage"), "ProfilePage");
+const RecommendedRoutePage = lazyPage(() => import("./RecommendedRoutePage"), "RecommendedRoutePage");
 const CareerLandingPage = lazyPage(() => import("./CareerPages"), "CareerLandingPage");
 const CareerTestPage = lazyPage(() => import("./CareerPages"), "CareerTestPage");
 const CareerResultPage = lazyPage(() => import("./CareerPages"), "CareerResultPage");
@@ -120,6 +121,7 @@ export function App() {
             <Route path="/market/news/:newsId" element={<MarketNewsPage />} />
             <Route path="/market/:symbol" element={<MarketAssetPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/route" element={<RecommendedRoutePage />} />
             <Route path="/career" element={<CareerLandingPage />} />
             <Route path="/career/test/:attemptId" element={<CareerTestPage />} />
             <Route path="/career/result/:attemptId" element={<CareerResultPage />} />

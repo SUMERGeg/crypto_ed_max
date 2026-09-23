@@ -1,4 +1,4 @@
-import type { CareerAttempt, CareerOverview, CareerResult, CareerRole, Course, CourseLessons, HomeData, Lesson, MarketAssetDetail, MarketAssetList, MarketNewsArticle, MarketNewsSummary, MarketPeriod, OnboardingState, OnboardingStatus, ProfileData, Quiz, QuizAnswer, QuizResult, ScenarioSummary, SecurityCase, SecurityCaseResult, SecurityCaseSummary, SecurityProgress, SimulationResult, SimulationState, ThreatCard, ThreatSummary } from "./types";
+import type { CareerAttempt, CareerOverview, CareerResult, CareerRole, Course, CourseLessons, HomeData, Lesson, MarketAssetDetail, MarketAssetList, MarketNewsArticle, MarketNewsSummary, MarketPeriod, OnboardingState, OnboardingStatus, ProfileData, Quiz, QuizAnswer, QuizResult, RecommendedRoute, ScenarioSummary, SecurityCase, SecurityCaseResult, SecurityCaseSummary, SecurityProgress, SimulationResult, SimulationState, ThreatCard, ThreatSummary } from "./types";
 
 let accessToken = "";
 let currentUserId = "demo-user";
@@ -79,6 +79,7 @@ export const api = {
   threats: (signal?: AbortSignal) => getJson<ThreatSummary[]>("/security/threats", signal),
   threat: (threatId: string, signal?: AbortSignal) => getJson<ThreatCard>(`/security/threats/${encodeURIComponent(threatId)}`, signal),
   profile: (signal?: AbortSignal) => getJson<ProfileData>("/profile", signal),
+  route: (signal?: AbortSignal) => getJson<RecommendedRoute>("/route", signal),
   onboarding: (signal?: AbortSignal) => getJson<OnboardingState>("/onboarding", signal),
   saveOnboarding: (status: Exclude<OnboardingStatus, "NOT_STARTED">, step: number) => sendJson<OnboardingState>("/onboarding", "POST", { status, step }),
   careerOverview: (signal?: AbortSignal) => getJson<CareerOverview>("/career", signal),

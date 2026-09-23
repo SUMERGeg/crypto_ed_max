@@ -284,6 +284,25 @@ export type ProfileData = {
   };
 };
 
+export type RecommendedRoute = {
+  version: number;
+  total: number;
+  completedCount: number;
+  continuousCompletedCount: number;
+  currentIndex: number | null;
+  finished: boolean;
+  stops: Array<{
+    id: string;
+    number: number;
+    type: "LESSON" | "SECURITY_CASE" | "REPLAY";
+    contentId: string;
+    title: string;
+    chapter: "crypto-basics" | "blockchain" | "finance" | "law-russia";
+    completed: boolean;
+    available: boolean;
+  }>;
+};
+
 export type HomeData = {
   user: { id: string; displayName: string };
   continueLesson: {

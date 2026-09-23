@@ -21,7 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { NavLink, useNavigate, useParams } from "react-router-dom";
+import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { api } from "./api";
 import { robotAssets } from "./robot";
 import type { SecurityCase, SecurityCaseResult, SecurityCaseSummary, SecurityProgress, ThreatCard, ThreatSummary } from "./types";
@@ -132,6 +132,7 @@ function ThreatList({ threats }: { threats: ThreatSummary[] }) {
 export function SecurityCasePage() {
   const { caseId = "" } = useParams();
   const navigate = useNavigate();
+  const fromRoute = new URLSearchParams(useLocation().search).get("from") === "route";
   const loader = useCallback((signal: AbortSignal) => api.securityCase(caseId, signal), [caseId]);
   const { data, error, retry } = useSecurityRemote(loader);
   const [selectedOptionId, setSelectedOptionId] = useState("");
@@ -168,9 +169,9 @@ export function SecurityCasePage() {
 
   return (
     <div className="security-flow-page">
-      <SecurityTopBar title={result ? "Разбор решения" : "Учебный кейс"} onBack={() => navigate("/security")}/>
+      <SecurityTopBar title={result ? "Разбор решения" : "Учебный кейс"} onBack={() => navigate(fromRoute ? "/route" : "/security")}/>
       {error ? <SecurityError retry={retry}/> : !data ? <SecuritySkeleton rows={3}/> : result
-        ? <SecurityResult item={data} result={result} repeat={repeat}/>
+        ? <SecurityResult item={data} result={result} repeat={repeat} fromRoute={fromRoute}/>
         : <SecurityQuestion item={data} selectedOptionId={selectedOptionId} setSelectedOptionId={setSelectedOptionId} submit={submit} submitting={submitting} submitError={submitError}/>} 
     </div>
   );
@@ -204,7 +205,7 @@ function SecurityQuestion({ item, selectedOptionId, setSelectedOptionId, submit,
   );
 }
 
-function SecurityResult({ item, result, repeat }: { item: SecurityCase; result: SecurityCaseResult; repeat: () => void }) {
+function SecurityResult({ item, result, repeat, fromRoute }: { item: SecurityCase; result: SecurityCaseResult; repeat: () => void; fromRoute: boolean }) {
   const safe = result.safetyLevel === "SAFE";
   return (
     <div className="security-result">
@@ -228,7 +229,7 @@ function SecurityResult({ item, result, repeat }: { item: SecurityCase; result: 
         <div>{result.threatIds.map((threatId) => <NavLink key={threatId} to={`/security/threats/${threatId}`}>{threatLabel(threatId)} <ChevronRight size={12}/></NavLink>)}</div>
       </section>
 
-      {result.nextCaseId ? <NavLink className="security-primary security-primary--link" to={`/security/cases/${result.nextCaseId}`}>Следующий кейс <ChevronRight size={15}/></NavLink> : <NavLink className="security-primary security-primary--link" to="/security">Вернуться к списку <ChevronRight size={15}/></NavLink>}
+      {fromRoute ? <NavLink className="security-primary security-primary--link" to="/route">Остановка пройдена · к маршруту <ChevronRight size={15}/></NavLink> : result.nextCaseId ? <NavLink className="security-primary security-primary--link" to={`/security/cases/${result.nextCaseId}`}>Следующий кейс <ChevronRight size={15}/></NavLink> : <NavLink className="security-primary security-primary--link" to="/security">Вернуться к списку <ChevronRight size={15}/></NavLink>}
       <button className="security-repeat" onClick={repeat}><RotateCcw size={14}/> Пройти этот кейс ещё раз</button>
       <p className="case-note">Разбор относится к этой учебной ситуации. В реальности один признак не гарантирует, что сообщение безопасно или опасно.</p>
     </div>

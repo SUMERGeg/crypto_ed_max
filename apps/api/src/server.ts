@@ -20,6 +20,7 @@ import {
   configureSimulationRepository,
   createSimulation,
   getSimulationState,
+  listCompletedSimulations,
   listScenarios,
   makeTrade,
   pauseSimulation,
@@ -44,6 +45,7 @@ import {
 import { createCareerRepository } from "./career-persistence.js";
 import { createGuestSession, createMaxSession, resolveApiUser, verifyGuestSession, verifyMaxInitData, type AppUser } from "./max-auth.js";
 import { createOnboardingRepository, type OnboardingStatus } from "./onboarding-persistence.js";
+import { buildRecommendedRoute } from "./route-data.js";
 
 try {
   loadEnvFile(fileURLToPath(new URL("../../../.env", import.meta.url)));
@@ -219,6 +221,19 @@ app.get("/api/v1/security/threats/:threatId", (request, response) => {
 app.get("/api/v1/security/progress", async (_request, response) => response.json(await getSecurityProgress(requestUser(response).id)));
 app.get("/api/v1/profile", async (_request, response) => {
   response.json(await getFullProfile(requestUser(response)));
+});
+app.get("/api/v1/route", async (_request, response) => {
+  const currentUser = requestUser(response);
+  const [learning, security, simulations] = await Promise.all([
+    progressRepository.getSnapshot(currentUser.id, currentUser.displayName),
+    securityRepository.getCompletedCaseIds(currentUser.id),
+    listCompletedSimulations(currentUser.id),
+  ]);
+  response.json(buildRecommendedRoute({
+    completedLessonIds: learning.completedLessonIds,
+    completedCaseIds: security,
+    completedScenarioIds: simulations.map((item) => item.scenarioId),
+  }));
 });
 
 app.get("/api/v1/onboarding", async (_request, response) => {
