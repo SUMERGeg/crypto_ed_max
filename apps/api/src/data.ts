@@ -104,9 +104,48 @@ function lesson(
 }
 
 function formatSourceLessonBody(body: string) {
-  const withQuotes = body.replace(/^(Важно|Упрощённо):\n\n([^\n]+)/gm, (_match, label: string, text: string) => `> **${label}:** ${text}`);
+  const paragraphs = body.split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean);
+  const formatted: string[] = [];
+  const isSentence = (paragraph: string) => /[.!?]$/.test(paragraph);
+  const isFlow = (paragraph: string) => /(?:→|↔|=)/.test(paragraph) && paragraph.length < 260;
+
+  for (let index = 0; index < paragraphs.length; index += 1) {
+    const paragraph = paragraphs[index]!;
+
+    if (/^(Важно|Обрати внимание|Помни):$/.test(paragraph)) {
+      const following = paragraphs[index + 1];
+      formatted.push(following ? `> **${paragraph}** ${following}` : `> **${paragraph}**`);
+      if (following) index += 1;
+      continue;
+    }
+
+    if (paragraph.endsWith(":")) {
+      let end = index + 1;
+      while (end < paragraphs.length) {
+        const candidate = paragraphs[end]!;
+        if (candidate.endsWith(":") || isSentence(candidate) || isFlow(candidate) || candidate.length > 140) break;
+        end += 1;
+      }
+      if (end - index > 1) {
+        formatted.push(`**${paragraph}**\n${paragraphs.slice(index + 1, end).map((item) => `- ${item}`).join("\n")}`);
+        index = end - 1;
+        continue;
+      }
+      formatted.push(`**${paragraph}**`);
+      continue;
+    }
+
+    if (isFlow(paragraph)) {
+      formatted.push(`> ${paragraph}`);
+      continue;
+    }
+
+    formatted.push(paragraph);
+  }
+
+  const withStructure = formatted.join("\n\n");
   return ["Криптовалюта", "Bitcoin", "Ethereum", "блокчейн", "транзакция", "Proof of Work", "Proof of Stake", "BTC", "ETH"]
-    .reduce((formatted, term) => formatted.replaceAll(term, `**${term}**`), withQuotes);
+    .reduce((result, term) => result.replaceAll(term, `**${term}**`), withStructure);
 }
 
 function expandedCryptoLesson(spec: CryptoLessonSpec, courseId = "crypto-basics"): LessonRecord {

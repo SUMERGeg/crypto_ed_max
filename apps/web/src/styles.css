@@ -302,6 +302,9 @@ a { color: inherit; text-decoration: none; }
 .lesson-page-card__body li + li { margin-top: 6px; }
 .lesson-page-card__body blockquote { margin: 13px 0; padding: 9px 12px; color: #344f79; font-weight: 700; border-left: 3px solid #7063e8; border-radius: 0 10px 10px 0; background: #f1f0ff; white-space: pre-line; }
 .lesson-page-card__body pre { margin: 13px 0; padding: 11px; overflow-x: auto; color: #354257; font: 11px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; border-radius: 10px; background: #edf1f7; white-space: pre-wrap; }
+.lesson-page-card--source .lesson-page-card__body,.lesson-page-card--source .lesson-page-card__body p { font-size: 13px; line-height: 1.72; }
+.lesson-page-card--source .lesson-page-card__body ul,.lesson-page-card--source .lesson-page-card__body ol { padding-left: 22px; }
+.lesson-page-card--source .lesson-page-card__body blockquote { padding: 11px 14px; }
 .lesson-page-card--bullets { border-color: #d6e7f7; background: linear-gradient(145deg,#fff,#f1f8ff); }.lesson-page-card--bullets .lesson-page-card__icon { color: #247fcf; background: #dceeff; }
 .lesson-page-card--example { border-color: #dddafb; background: linear-gradient(145deg,#fff,#f2f1ff); }
 .lesson-page-card--risk { border-color: #f0d7c5; background: linear-gradient(145deg,#fff,#fff5ed); }.lesson-page-card--risk .lesson-page-card__icon { color: #d77732; background: #ffead9; }
