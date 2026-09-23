@@ -226,7 +226,7 @@ export function LessonPage() {
           </section>
 
           {page.kind === "CONTENT" ? (
-            <article className={`lesson-page-card lesson-page-card--${page.sectionType.toLowerCase()} ${lesson.courseId === "crypto-basics" || lesson.courseId === "blockchain" ? "lesson-page-card--source" : ""}`}>
+            <article className={`lesson-page-card lesson-page-card--${page.sectionType.toLowerCase()} ${["crypto-basics", "blockchain", "finance", "law-russia"].includes(lesson.courseId) ? "lesson-page-card--source" : ""}`}>
               <span className="lesson-page-card__icon">
                 {page.sectionType === "EXAMPLE" ? <Lightbulb size={21} /> : page.sectionType === "RISK" ? <TriangleAlert size={21} /> : page.sectionType === "KEY_TAKEAWAY" ? <Sparkles size={21} /> : <BookOpen size={21} />}
               </span>
