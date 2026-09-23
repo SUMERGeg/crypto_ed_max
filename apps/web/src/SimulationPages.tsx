@@ -27,6 +27,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { api } from "./api";
 import { robotAssets } from "./robot";
+import { scenarioArtFor } from "./scenario-art";
 import type { ScenarioSummary, SimulationEvent, SimulationResult, SimulationState } from "./types";
 
 const rubles = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
@@ -141,8 +142,8 @@ function ScenarioCard({ scenario }: { scenario: ScenarioSummary }) {
   return (
     <NavLink className="scenario-card" to={`/practice/${scenario.id}`}>
       <div className="scenario-card__art">
+        <img src={scenarioArtFor(scenario.id)} alt="" aria-hidden="true" />
         <div className="scenario-card__badge"><Zap size={13} /> Демо за {scenario.estimatedMinutes} мин.</div>
-        <BarChart3 size={76} strokeWidth={1.2} />
       </div>
       <div className="scenario-card__body">
         <span className="section-kicker">Market Replay · версия {scenario.version}</span>
