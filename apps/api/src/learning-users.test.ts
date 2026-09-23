@@ -35,6 +35,37 @@ test("MAX learners see their own names and lesson progress", async () => {
   assert.equal((await getLesson("crypto-intro", boris))?.status, "NOT_STARTED");
 });
 
+test("crypto and blockchain courses use the first five source lessons in order", () => {
+  const titlesFor = (courseId: string) => lessons
+    .filter((lesson) => lesson.courseId === courseId)
+    .sort((left, right) => left.order - right.order)
+    .map((lesson) => lesson.title);
+
+  assert.deepEqual(titlesFor("crypto-basics"), [
+    "Что такое криптовалюта",
+    "Bitcoin",
+    "Монеты и токены",
+    "Ethereum и смарт-контракты",
+    "Стейблкоины",
+  ]);
+  assert.deepEqual(titlesFor("blockchain"), [
+    "Блокчейн и распределённый реестр",
+    "Как создаётся транзакция",
+    "Как транзакция попадает в блок",
+    "Как сеть приходит к согласию",
+    "Bitcoin: майнинг и Proof of Work",
+  ]);
+});
+
+test("source lessons retain readable Markdown emphasis and source warnings", async () => {
+  await initializeLearningState(new TestProgressRepository());
+  const lesson = await getLesson("crypto-intro", { id: "max:source-format", displayName: "Ирина" });
+  assert.ok(lesson);
+  assert.match(lesson.pages[0]?.kind === "CONTENT" ? lesson.pages[0].body : "", /\*\*Криптовалюта\*\*/);
+  const tokensLesson = await getLesson("crypto-tokens", { id: "max:source-format", displayName: "Ирина" });
+  assert.match(tokensLesson?.pages.filter((page) => page.kind === "CONTENT").map((page) => page.body).join("\n") ?? "", /> \*\*Важно:\*\*/);
+});
+
 test("finance lessons preserve seven source screens, six illustrations and no intermediate checks", async () => {
   await initializeLearningState(new TestProgressRepository());
   const learner = { id: "max:finance", displayName: "Ирина" };

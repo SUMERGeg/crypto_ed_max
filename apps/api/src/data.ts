@@ -1,4 +1,5 @@
-import { cryptoLessonSpecs, type CryptoLessonPageSpec, type CryptoLessonSpec } from "./crypto-lessons.js";
+import { type CryptoLessonPageSpec, type CryptoLessonSpec } from "./crypto-lessons.js";
+import { sourceBlockchainLessonSpecs, sourceCryptoLessonSpecs } from "./source-lessons.js";
 import { financeLessonSpecs, type FinanceLessonSpec } from "./finance-lessons.js";
 import { lawLessonSpecs } from "./law-lessons.js";
 
@@ -102,18 +103,24 @@ function lesson(
   };
 }
 
-function expandedCryptoLesson(spec: CryptoLessonSpec): LessonRecord {
+function formatSourceLessonBody(body: string) {
+  const withQuotes = body.replace(/^(Важно|Упрощённо):\n\n([^\n]+)/gm, (_match, label: string, text: string) => `> **${label}:** ${text}`);
+  return ["Криптовалюта", "Bitcoin", "Ethereum", "блокчейн", "транзакция", "Proof of Work", "Proof of Stake", "BTC", "ETH"]
+    .reduce((formatted, term) => formatted.replaceAll(term, `**${term}**`), withQuotes);
+}
+
+function expandedCryptoLesson(spec: CryptoLessonSpec, courseId = "crypto-basics"): LessonRecord {
   const questions = spec.questions.map((item) => question(item.id, item.text, item.correct, item.wrong, item.explanation));
   return {
     id: spec.id,
-    courseId: "crypto-basics",
+    courseId,
     order: spec.order,
     title: spec.title,
     shortDescription: spec.shortDescription,
     durationMinutes: spec.durationMinutes,
     robotTip: spec.robotTip,
-    sections: spec.pages.map((page) => ({ type: page.sectionType, title: page.title, body: page.body })),
-    detailedPages: spec.pages,
+    sections: spec.pages.map((page) => ({ type: page.sectionType, title: page.title, body: formatSourceLessonBody(page.body) })),
+    detailedPages: spec.pages.map((page) => ({ ...page, body: formatSourceLessonBody(page.body) })),
     checkpointAfter: spec.checkpointAfter,
     quiz: { id: `quiz-${spec.id}`, title: `Итоговый тест: ${spec.title}`, questions },
   };
@@ -502,11 +509,12 @@ const legacyLessons: LessonRecord[] = [
 ];
 
 export const lessons: LessonRecord[] = [
-  ...cryptoLessonSpecs.map(expandedCryptoLesson),
+  ...sourceCryptoLessonSpecs.map((spec) => expandedCryptoLesson(spec)),
+  ...sourceBlockchainLessonSpecs.map((spec) => expandedCryptoLesson(spec, "blockchain")),
   ...financeLessonSpecs.map(expandedFinanceLesson),
   ...lawLessonSpecs.map(expandedLawLesson),
   ...legacyLessons
-    .filter((item) => item.courseId !== "crypto-basics" && item.courseId !== "finance" && item.courseId !== "law-russia"),
+    .filter((item) => item.courseId !== "crypto-basics" && item.courseId !== "blockchain" && item.courseId !== "finance" && item.courseId !== "law-russia"),
 ];
 
 let progressRepository: ProgressRepository | null = null;
