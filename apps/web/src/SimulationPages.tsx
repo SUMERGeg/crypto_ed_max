@@ -27,6 +27,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { api } from "./api";
 import { robotAssets } from "./robot";
+import { RouteNextStep } from "./RouteNextStep";
+import { backDestination } from "./navigation";
 import { scenarioArtFor } from "./scenario-art";
 import type { ScenarioSummary, SimulationEvent, SimulationResult, SimulationState } from "./types";
 
@@ -124,6 +126,7 @@ export function PracticePage() {
       </header>
 
       <div className="practice-rule"><ShieldCheck size={18} /><span><strong>Это учебная среда</strong><small>Только виртуальные деньги. Никаких реальных покупок.</small></span></div>
+      <RouteNextStep />
 
       <div className="scenario-heading"><div><span>Доступные сценарии</span><h2>Выбери исторический период</h2></div><strong>{scenarios?.length ?? 1}</strong></div>
       {error ? <div className="flow-error"><strong>Не удалось загрузить сценарий</strong><span>Проверь локальный API.</span></div> : !scenarios ? (
@@ -278,7 +281,7 @@ export function ReplayPage() {
   return (
     <div className="replay-page">
       <header className="replay-top">
-        <button onClick={() => navigate(new URLSearchParams(location.search).get("from") === "route" ? "/route" : "/practice")} aria-label="Выйти"><ArrowLeft size={19} /></button>
+        <button onClick={() => navigate(backDestination({ fromRoute: new URLSearchParams(location.search).get("from") === "route", parent: "/practice" }))} aria-label="Выйти"><ArrowLeft size={19} /></button>
         <div><span>Историческое время</span><strong>{replayDate.format(new Date(state.scenarioAt))}</strong></div>
         <button onClick={() => state.status === "ACTIVE" ? void act(() => api.pauseSimulation(sessionId)) : void act(() => api.resumeSimulation(sessionId))} aria-label={state.status === "ACTIVE" ? "Пауза" : "Продолжить"}>
           {state.status === "ACTIVE" ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
@@ -391,6 +394,7 @@ export function ReplayResultPage() {
       <DecisionHistory decisions={result.decisions} />
       <aside className="result-learning"><Sparkles size={20} /><div><strong>Главная мысль</strong><p>Рост рынка сам по себе не делает каждую сделку удачной. Важно заранее понимать риск и не принимать прошлый результат за обещание.</p></div></aside>
       {fromRoute && <button className="primary-cta" onClick={() => navigate("/route")}><CheckCircle2 size={17}/> Остановка пройдена · к маршруту</button>}
+      {!fromRoute && <NavLink className="primary-cta" to="/learn"><BookOpenCheck size={17}/> Продолжить обучение</NavLink>}
       <button className="primary-cta" onClick={() => navigate("/practice")}><RefreshCcw size={17} /> Пройти ещё раз</button>
       <NavLink className="result-home-link" to="/">Вернуться на главную</NavLink>
       <p className="intro-disclaimer">Учебный материал. Не инвестиционная рекомендация.</p>

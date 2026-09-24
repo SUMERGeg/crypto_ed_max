@@ -18,6 +18,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { api } from "./api";
 import { robotAssets } from "./robot";
+import { backDestination, contextualFollowUp } from "./navigation";
 import { LessonIllustration, preloadImage } from "./lesson-images";
 import type { CourseLessons, Lesson, Quiz, QuizAnswer, QuizResult } from "./types";
 
@@ -389,7 +390,7 @@ export function QuizResultPage() {
 
   return (
     <div className="page page--light page--flow result-page">
-      <FlowTopBar title="Результат" onBack={() => navigate(fromRoute ? "/route" : `/learn/${result.courseId}`)} />
+      <FlowTopBar title="Результат" onBack={() => navigate(backDestination({ fromRoute, parent: `/learn/${result.courseId}` }))} />
       <section className="result-hero">
         <div className="result-orbit"><span>{result.scorePercent}%</span><img src={result.passed ? robotAssets.celebrating : robotAssets.thinking} alt={result.passed ? "Робот празднует результат" : "Робот помогает разобрать ошибки"} /></div>
         <span className="result-eyebrow">{result.passed ? "Итоговый тест пройден" : `Нужно не меньше ${result.passingScorePercent}%`}</span>
@@ -424,6 +425,7 @@ export function QuizResultPage() {
 
       <div className="result-actions">
         {fromRoute && result.passed && <button className="primary-cta primary-cta--button" type="button" onClick={() => navigate("/route")}>Остановка пройдена · к маршруту <ArrowRight size={18}/></button>}
+        {!fromRoute && result.passed && <button className="primary-cta primary-cta--button" type="button" onClick={() => navigate(contextualFollowUp(result.courseId))}>Продолжить в сервисе <ArrowRight size={18}/></button>}
         {!fromRoute && result.nextLessonId && result.passed && <button className="primary-cta primary-cta--button" type="button" onClick={() => navigate(`/lessons/${result.nextLessonId}`)}>Следующий урок <ArrowRight size={18} /></button>}
         {!result.passed && <button className="primary-cta primary-cta--button" type="button" onClick={() => navigate(`/lessons/${result.lessonId}${location.search}`)}>Повторить материал <BookOpen size={18} /></button>}
         <button className="secondary-wide" type="button" onClick={() => navigate(`/lessons/${result.lessonId}/quiz${location.search}`, { replace: true })}><RotateCcw size={17} /> Пройти ещё раз</button>

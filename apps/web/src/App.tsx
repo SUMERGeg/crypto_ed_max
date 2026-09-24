@@ -21,6 +21,8 @@ import { api } from "./api";
 import { robotAssets } from "./robot";
 import type { Course, HomeData } from "./types";
 import { currentMaxLaunchData } from "./max-client";
+import { RouteNextStep } from "./RouteNextStep";
+import { backDestination } from "./navigation";
 import { useTheme } from "./theme";
 
 function lazyPage<T extends Record<K, ComponentType>, K extends keyof T>(loader: () => Promise<T>, name: K) {
@@ -62,6 +64,16 @@ function preloadSection(path: string) {
   return sectionLoaders[section]?.();
 }
 
+function detailParentPath(pathname: string) {
+  if (pathname.startsWith("/lessons") || pathname.startsWith("/quiz")) return "/learn";
+  if (pathname.startsWith("/simulation") || pathname.startsWith("/practice/")) return "/practice";
+  if (pathname.startsWith("/security/")) return "/security";
+  if (pathname.startsWith("/market/")) return "/market";
+  if (pathname.startsWith("/career/")) return "/career";
+  if (pathname === "/route") return "/profile";
+  return "/";
+}
+
 function useRemoteData<T>(loader: (signal: AbortSignal) => Promise<T>) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState(false);
@@ -92,7 +104,7 @@ export function App() {
       button.hide();
       return;
     }
-    const goBack = () => navigate(-1);
+    const goBack = () => navigate(backDestination({ fromRoute: new URLSearchParams(location.search).get("from") === "route", parent: detailParentPath(location.pathname) }));
     button.show();
     button.onClick(goBack);
     return () => button.offClick(goBack);
@@ -198,6 +210,7 @@ function HomePage() {
           <Play size={17} fill="currentColor" />
         </NavLink>
       </section>
+      <RouteNextStep dark />
 
       <section className="home-section">
         <div className="section-heading">
@@ -230,7 +243,7 @@ function HomePage() {
         <Progress value={data.overallProgress.percent} dark />
       </section>
 
-      <section className="news-card">
+      <NavLink className="news-card" to="/market">
         <div className="news-card__icon"><BarChart3 size={19} /></div>
         <div>
           <span className="section-kicker">Последний разбор</span>
@@ -238,7 +251,7 @@ function HomePage() {
           <p>{data.latestNews.preview}</p>
         </div>
         <ChevronRight size={20} />
-      </section>
+      </NavLink>
 
       <aside className="robot-tip robot-tip--dark">
         <img src={robotAssets.teaching} alt="" aria-hidden="true" />
@@ -269,6 +282,7 @@ function LearnPage() {
     <div className="page page--light">
       <PageHeader eyebrow="Учись в своём темпе" title="Учиться" description="Выбери тему: все направления открыты сразу." />
       <div className="assistant-corner"><img src={robotAssets.reading} alt="Крипто-помощник читает" /></div>
+      <RouteNextStep />
       {error ? <ErrorState compact /> : !data ? <ListSkeleton /> : (
         <div className="course-list">
           {data.map((course, index) => <CourseCard key={course.id} course={course} index={index} />)}

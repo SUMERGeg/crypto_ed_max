@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "./api";
 import { robotAssets } from "./robot";
+import { routeStopPath } from "./navigation";
 import type { RecommendedRoute } from "./types";
 
 const chapters: Record<RecommendedRoute["stops"][number]["chapter"], string> = {
@@ -11,11 +12,6 @@ const chapters: Record<RecommendedRoute["stops"][number]["chapter"], string> = {
   finance: "Финансовые основы",
   "law-russia": "Россия и право",
 };
-
-function stopPath(stop: RecommendedRoute["stops"][number]) {
-  const prefix = stop.type === "LESSON" ? "/lessons" : stop.type === "SECURITY_CASE" ? "/security/cases" : "/practice";
-  return `${prefix}/${encodeURIComponent(stop.contentId)}?from=route`;
-}
 
 function stopLabel(type: RecommendedRoute["stops"][number]["type"]) {
   return type === "LESSON" ? "Урок" : type === "SECURITY_CASE" ? "Кейс" : "Практика";
@@ -89,9 +85,9 @@ export function RecommendedRoutePage() {
           const current = index === data.currentIndex;
           return <section key={stop.id} ref={current ? currentRef : undefined} className={`recommended-route-stop recommended-route-stop--${index % 2 === 0 ? "left" : "right"} ${current ? "recommended-route-stop--current" : ""}`} style={{ top: index * 154 }}>
             {chapterStart && <div className="recommended-route-chapter">Глава {Object.keys(chapters).indexOf(stop.chapter) + 1} · {chapters[stop.chapter]}</div>}
-            <button type="button" disabled={!stop.available} onClick={() => navigate(stopPath(stop))} aria-label={`Остановка ${stop.number} из ${data.total}, ${stopLabel(stop.type).toLowerCase()}, ${stop.title}, ${stop.completed ? "пройдено" : current ? "текущая" : "пока недоступна"}`} className={`recommended-route-card recommended-route-card--${stop.type.toLowerCase()} ${stop.completed ? "recommended-route-card--done" : ""}`}>
+            <button type="button" disabled={!stop.available} onClick={() => navigate(routeStopPath(stop))} aria-label={`Остановка ${stop.number} из ${data.total}, ${stopLabel(stop.type).toLowerCase()}, ${stop.title}, ${stop.completed ? "пройдено" : current ? "текущая" : "сначала предыдущая остановка"}`} className={`recommended-route-card recommended-route-card--${stop.type.toLowerCase()} ${stop.completed ? "recommended-route-card--done" : ""}`}>
               <span className="recommended-route-card__number">{stop.completed ? <Check size={16}/> : stop.number}</span>
-              <span className="recommended-route-card__content"><small><StopIcon type={stop.type}/>{stopLabel(stop.type)} · {stop.number}/{data.total}</small><strong>{stop.title}</strong><em>{stop.completed ? "Пройдено" : current ? "Продолжить" : "Впереди"}</em></span>
+              <span className="recommended-route-card__content"><small><StopIcon type={stop.type}/>{stopLabel(stop.type)} · {stop.number}/{data.total}</small><strong>{stop.title}</strong><em>{stop.completed ? "Пройдено" : current ? "Продолжить" : stop.available ? "Впереди" : "Сначала предыдущая остановка"}</em></span>
               {stop.available && <ArrowRight className="recommended-route-card__arrow" size={16}/>}
             </button>
           </section>;

@@ -20,6 +20,7 @@ import { api } from "./api";
 import { CoinRainButton } from "./CoinRainButton";
 import { buildChartGeometry, nearestChartPoint } from "./market-chart";
 import { robotAssets } from "./robot";
+import { RouteNextStep } from "./RouteNextStep";
 import type { MarketAsset, MarketAssetDetail, MarketAssetList, MarketNewsArticle, MarketNewsSummary, MarketPeriod } from "./types";
 
 const rubles = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
@@ -63,6 +64,7 @@ export function MarketPage() {
         </div>
         <img src={robotAssets.thinking} alt="Крипто-помощник изучает рынок" />
       </section>
+      <RouteNextStep />
 
       <div className="market-tabs" role="tablist" aria-label="Разделы рынка">
         <button className={tab === "quotes" ? "active" : ""} onClick={() => setTab("quotes")} role="tab" aria-selected={tab === "quotes"}>

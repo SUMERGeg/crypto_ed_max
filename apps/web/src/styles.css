@@ -141,6 +141,10 @@ a { color: inherit; text-decoration: none; }
 .progress-track--dark { background: rgba(154, 170, 208, .19); }
 .progress-track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #6e5af6, #4da0f2); box-shadow: 0 0 12px rgba(83, 116, 243, .35); }
 
+.route-next-step { display:flex; align-items:center; gap:11px; margin:14px 0; padding:13px 14px; border:1px solid var(--line, #dce4f0); border-radius:18px; background:var(--surface, #fff); color:inherit; text-decoration:none; box-shadow:0 8px 20px rgba(22,45,90,.08); }
+.route-next-step > svg:first-child { color:#6559e8; flex:none; }.route-next-step > span { display:grid; gap:2px; min-width:0; flex:1; }.route-next-step small,.route-next-step em { color:#7a879c; font-size:11px; font-style:normal; }.route-next-step strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; }.route-next-step > svg:last-child { color:#6559e8; flex:none; }
+.route-next-step--dark { background:rgba(20,42,82,.85); border-color:rgba(143,176,234,.24); color:#fff; box-shadow:none; }.route-next-step--dark small,.route-next-step--dark em { color:#b8cbe8; }
+
 .home-section { margin-top: 20px; }
 .section-heading { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 10px; }
 .section-heading h2 { margin: 0; font-size: 15px; }

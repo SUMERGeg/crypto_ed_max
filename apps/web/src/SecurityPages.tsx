@@ -24,6 +24,8 @@ import { useCallback, useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { api } from "./api";
 import { robotAssets } from "./robot";
+import { backDestination } from "./navigation";
+import { RouteNextStep } from "./RouteNextStep";
 import type { SecurityCase, SecurityCaseResult, SecurityCaseSummary, SecurityProgress, ThreatCard, ThreatSummary } from "./types";
 
 function useSecurityRemote<T>(loader: (signal: AbortSignal) => Promise<T>) {
@@ -65,6 +67,7 @@ export function SecurityPage() {
       </section>
 
       {data && <SecurityProgressCard progress={data.progress} />}
+      <RouteNextStep />
 
       <div className="security-tabs" role="tablist" aria-label="Разделы безопасности">
         <button className={tab === "cases" ? "active" : ""} onClick={() => setTab("cases")} role="tab" aria-selected={tab === "cases"}><ShieldCheck size={15}/> Учебные кейсы</button>
@@ -169,7 +172,7 @@ export function SecurityCasePage() {
 
   return (
     <div className="security-flow-page">
-      <SecurityTopBar title={result ? "Разбор решения" : "Учебный кейс"} onBack={() => navigate(fromRoute ? "/route" : "/security")}/>
+      <SecurityTopBar title={result ? "Разбор решения" : "Учебный кейс"} onBack={() => navigate(backDestination({ fromRoute, parent: "/security" }))}/>
       {error ? <SecurityError retry={retry}/> : !data ? <SecuritySkeleton rows={3}/> : result
         ? <SecurityResult item={data} result={result} repeat={repeat} fromRoute={fromRoute}/>
         : <SecurityQuestion item={data} selectedOptionId={selectedOptionId} setSelectedOptionId={setSelectedOptionId} submit={submit} submitting={submitting} submitError={submitError}/>} 
@@ -229,7 +232,7 @@ function SecurityResult({ item, result, repeat, fromRoute }: { item: SecurityCas
         <div>{result.threatIds.map((threatId) => <NavLink key={threatId} to={`/security/threats/${threatId}`}>{threatLabel(threatId)} <ChevronRight size={12}/></NavLink>)}</div>
       </section>
 
-      {fromRoute ? <NavLink className="security-primary security-primary--link" to="/route">Остановка пройдена · к маршруту <ChevronRight size={15}/></NavLink> : result.nextCaseId ? <NavLink className="security-primary security-primary--link" to={`/security/cases/${result.nextCaseId}`}>Следующий кейс <ChevronRight size={15}/></NavLink> : <NavLink className="security-primary security-primary--link" to="/security">Вернуться к списку <ChevronRight size={15}/></NavLink>}
+      {fromRoute ? <NavLink className="security-primary security-primary--link" to="/route">Остановка пройдена · к маршруту <ChevronRight size={15}/></NavLink> : <NavLink className="security-primary security-primary--link" to="/learn">Продолжить обучение <ChevronRight size={15}/></NavLink>}
       <button className="security-repeat" onClick={repeat}><RotateCcw size={14}/> Пройти этот кейс ещё раз</button>
       <p className="case-note">Разбор относится к этой учебной ситуации. В реальности один признак не гарантирует, что сообщение безопасно или опасно.</p>
     </div>
