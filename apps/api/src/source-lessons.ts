@@ -1,5 +1,21 @@
 import type { CryptoLessonSpec } from "./crypto-lessons.js";
 
+function attachGeneratedIllustrations(
+  lessons: CryptoLessonSpec[],
+  folder: "source-crypto" | "source-blockchain",
+) {
+  lessons.forEach((lesson, lessonIndex) => {
+    lesson.pages.forEach((page, pageIndex) => {
+      const lessonNumber = String(lessonIndex + 1).padStart(2, "0");
+      const screenNumber = String(pageIndex + 1).padStart(2, "0");
+      page.illustration = {
+        src: `/assets/lessons/${folder}/lesson-${lessonNumber}-screen-${screenNumber}.webp`,
+        alt: `Учебная иллюстрация к экрану ${pageIndex + 1} урока «${lesson.title}»`,
+      };
+    });
+  });
+}
+
 export const sourceCryptoLessonSpecs: CryptoLessonSpec[] = [
   {
     "id": "crypto-intro",
@@ -559,6 +575,8 @@ export const sourceCryptoLessonSpecs: CryptoLessonSpec[] = [
   }
 ];
 
+attachGeneratedIllustrations(sourceCryptoLessonSpecs, "source-crypto");
+
 export const sourceBlockchainLessonSpecs: CryptoLessonSpec[] = [
   {
     "id": "blockchain-ledger",
@@ -1099,3 +1117,5 @@ export const sourceBlockchainLessonSpecs: CryptoLessonSpec[] = [
     ]
   }
 ];
+
+attachGeneratedIllustrations(sourceBlockchainLessonSpecs, "source-blockchain");
