@@ -10,7 +10,7 @@
     "dev:api": "npm run dev --workspace @crypto-education/api",
     "dev:web": "npm run dev --workspace @crypto-education/web",
     "build": "npm run build --workspace @crypto-education/api && npm run build --workspace @crypto-education/web",
-    "start": "npm run start --workspace @crypto-education/api",
+    "start": "node apps/api/dist/server.js",
     "typecheck": "npm run typecheck --workspace @crypto-education/api && npm run typecheck --workspace @crypto-education/web",
     "smoke:replay-result": "npm run build --workspace @crypto-education/api && node scripts/smoke-replay-result.mjs"
   },
