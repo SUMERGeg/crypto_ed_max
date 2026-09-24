@@ -67,12 +67,12 @@ export function SecurityPage() {
       </section>
 
       {data && <SecurityProgressCard progress={data.progress} />}
-      <RouteNextStep />
-
       <div className="security-tabs" role="tablist" aria-label="Разделы безопасности">
         <button className={tab === "cases" ? "active" : ""} onClick={() => setTab("cases")} role="tab" aria-selected={tab === "cases"}><ShieldCheck size={15}/> Учебные кейсы</button>
         <button className={tab === "threats" ? "active" : ""} onClick={() => setTab("threats")} role="tab" aria-selected={tab === "threats"}><BookOpenCheck size={15}/> База угроз</button>
       </div>
+
+      <RouteNextStep />
 
       {error ? <SecurityError retry={retry}/> : !data ? <SecuritySkeleton/> : tab === "cases"
         ? <SecurityCases cases={data.cases}/>

@@ -210,7 +210,7 @@ function HomePage() {
           <Play size={17} fill="currentColor" />
         </NavLink>
       </section>
-      <RouteNextStep dark />
+      <RouteNextStep />
 
       <section className="home-section">
         <div className="section-heading">

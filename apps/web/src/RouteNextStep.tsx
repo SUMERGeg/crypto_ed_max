@@ -5,7 +5,7 @@ import { api } from "./api";
 import { routeStopPath } from "./navigation";
 import type { RecommendedRoute } from "./types";
 
-export function RouteNextStep({ dark = false }: { dark?: boolean }) {
+export function RouteNextStep() {
   const [route, setRoute] = useState<RecommendedRoute | null>(null);
   useEffect(() => {
     const controller = new AbortController();
@@ -15,7 +15,7 @@ export function RouteNextStep({ dark = false }: { dark?: boolean }) {
   const stop = route?.currentIndex === null ? null : route?.stops[route.currentIndex];
   if (!route || !stop) return null;
   const Icon = stop.type === "LESSON" ? BookOpen : stop.type === "SECURITY_CASE" ? ShieldCheck : TrendingUp;
-  return <NavLink className={`route-next-step ${dark ? "route-next-step--dark" : ""}`} to={routeStopPath(stop)}>
+  return <NavLink className="route-next-step" to={routeStopPath(stop)}>
     <Icon size={18}/><span><small>Следующий шаг маршрута</small><strong>{stop.title}</strong><em>{stop.type === "LESSON" ? "Урок" : stop.type === "SECURITY_CASE" ? "Учебный кейс" : "Market Replay"} · {stop.number}/{route.total}</em></span><ArrowRight size={18}/>
   </NavLink>;
 }

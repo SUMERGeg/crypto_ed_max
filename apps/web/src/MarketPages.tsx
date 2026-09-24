@@ -64,8 +64,6 @@ export function MarketPage() {
         </div>
         <img src={robotAssets.thinking} alt="Крипто-помощник изучает рынок" />
       </section>
-      <RouteNextStep />
-
       <div className="market-tabs" role="tablist" aria-label="Разделы рынка">
         <button className={tab === "quotes" ? "active" : ""} onClick={() => setTab("quotes")} role="tab" aria-selected={tab === "quotes"}>
           <BarChart3 size={15} /> Котировки
@@ -74,6 +72,8 @@ export function MarketPage() {
           <Newspaper size={15} /> Новости
         </button>
       </div>
+
+      <RouteNextStep />
 
       {error ? <MarketError retry={retry} /> : !data ? <MarketSkeleton /> : tab === "quotes"
         ? <QuotesPanel market={data.market} />
