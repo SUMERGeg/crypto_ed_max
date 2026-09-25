@@ -1,5 +1,6 @@
 export const robotAssets = {
   waving: "/assets/crypto-buddy.webp",
+  route: "/assets/crypto-buddy-route.webp",
   reading: "/assets/crypto-buddy-reading.webp",
   teaching: "/assets/crypto-buddy-teaching.webp",
   thinking: "/assets/crypto-buddy-thinking.webp",

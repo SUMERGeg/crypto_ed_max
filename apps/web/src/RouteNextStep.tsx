@@ -33,7 +33,10 @@ export function RouteNextStep({ dashboardLesson }: RouteNextStepProps) {
         <span className="dashboard-route-card__lesson">Урок {dashboardLesson.lessonNumber} из {dashboardLesson.totalCourseLessons}</span>
         <span className="dashboard-route-card__progress"><i style={{ width: `${dashboardLesson.progressPercent}%` }} /></span>
       </div>
-      <img className="dashboard-route-card__robot" src={robotAssets.waving} alt="Крипто-помощник показывает маршрут" />
+      <span className="dashboard-route-card__spark dashboard-route-card__spark--one" aria-hidden="true">✦</span>
+      <span className="dashboard-route-card__spark dashboard-route-card__spark--two" aria-hidden="true">✦</span>
+      <span className="dashboard-route-card__spark dashboard-route-card__spark--three" aria-hidden="true">✦</span>
+      <img className="dashboard-route-card__robot" src={robotAssets.route} alt="Крипто-помощник показывает маршрут" loading="eager" />
       <span className="dashboard-route-card__coin dashboard-route-card__coin--bitcoin" aria-hidden="true">₿</span>
       <span className="dashboard-route-card__coin dashboard-route-card__coin--ethereum" aria-hidden="true">◆</span>
       <span className="dashboard-route-card__next">

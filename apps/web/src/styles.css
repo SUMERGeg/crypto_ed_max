@@ -164,10 +164,10 @@ a { color: inherit; text-decoration: none; }
 .dashboard-route-card {
   position:relative; display:block; width:100%; min-height:177px; margin-top:15px; padding:14px 13px 0;
   overflow:hidden; color:#fff; border:1px solid #805cff; border-radius:19px;
-  background:radial-gradient(circle at 79% 28%, rgba(38, 123, 255, .59), transparent 34%),
+  background:radial-gradient(circle at 79% 28%, rgba(38, 123, 255, .69), transparent 36%),
     radial-gradient(circle at 92% 100%, rgba(110, 36, 225, .73), transparent 52%),
     linear-gradient(120deg, #141d50 0%, #171954 57%, #0b2669 100%);
-  box-shadow:0 0 0 1px rgba(161, 82, 255, .45), 0 0 16px rgba(134, 65, 255, .56), 0 12px 24px rgba(7, 12, 56, .48);
+  box-shadow:inset -1px 0 rgba(56, 195, 255, .88), 0 0 0 1px rgba(161, 82, 255, .45), 0 0 16px rgba(134, 65, 255, .56), 0 12px 24px rgba(7, 12, 56, .48);
   text-decoration:none;
 }
 .dashboard-route-card::before {
@@ -177,13 +177,18 @@ a { color: inherit; text-decoration: none; }
     radial-gradient(circle at 94% 40%, #c4a5ff 0 1px, transparent 2px),
     radial-gradient(circle at 68% 47%, #8dd9ff 0 1px, transparent 2px);
 }
+.dashboard-route-card::after { position:absolute; z-index:0; top:8px; right:-18px; width:175px; height:113px; content:""; border:1px solid rgba(88, 153, 255, .4); border-radius:50%; box-shadow:0 0 15px rgba(82, 119, 255, .35); transform:rotate(-22deg); pointer-events:none; }
 .dashboard-route-card__current { position:relative; z-index:2; display:flex; flex-direction:column; align-items:flex-start; width:59%; min-width:0; }
 .dashboard-route-card__kicker { color:#a8c8ff; font-size:10px; font-weight:800; letter-spacing:.065em; text-transform:uppercase; }
 .dashboard-route-card__current > strong { margin-top:3px; overflow:hidden; max-width:100%; font-size:19px; line-height:1.2; letter-spacing:-.03em; text-overflow:ellipsis; white-space:nowrap; }
 .dashboard-route-card__lesson { margin-top:2px; color:#d5e0fa; font-size:11px; }
 .dashboard-route-card__progress { width:100%; height:7px; margin-top:8px; overflow:hidden; border-radius:999px; background:rgba(154, 170, 208, .23); }
 .dashboard-route-card__progress i { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg, #8b5eff, #3fc1ff); box-shadow:0 0 12px rgba(83, 168, 255, .54); }
-.dashboard-route-card__robot { position:absolute; z-index:1; right:-5px; top:-17px; width:155px; height:148px; object-fit:contain; filter:drop-shadow(0 9px 12px rgba(0, 5, 34, .44)); }
+.dashboard-route-card__robot { position:absolute; z-index:1; right:-9px; top:-20px; width:165px; height:155px; object-fit:contain; filter:drop-shadow(0 0 9px rgba(67, 184, 255, .58)) drop-shadow(0 9px 12px rgba(0, 5, 34, .44)); }
+.dashboard-route-card__spark { position:absolute; z-index:1; color:#a9e7ff; line-height:1; text-shadow:0 0 7px #43aaff, 0 0 14px #6675ff; pointer-events:none; }
+.dashboard-route-card__spark--one { top:14px; right:120px; font-size:14px; }
+.dashboard-route-card__spark--two { top:22px; right:20px; font-size:10px; }
+.dashboard-route-card__spark--three { top:77px; right:154px; font-size:9px; }
 .dashboard-route-card__coin { position:absolute; z-index:1; display:grid; place-items:center; width:27px; height:27px; border:1px solid rgba(255, 255, 255, .74); border-radius:50%; font-size:18px; font-weight:800; box-shadow:0 0 12px currentColor; }
 .dashboard-route-card__coin--bitcoin { top:40px; right:133px; color:#fff3cc; background:linear-gradient(145deg, #ffc75b, #e88130); transform:rotate(-20deg); }
 .dashboard-route-card__coin--ethereum { top:79px; right:13px; color:#ded8ff; background:linear-gradient(145deg, #a582ff, #4e48ce); transform:rotate(14deg); }
@@ -204,8 +209,6 @@ a { color: inherit; text-decoration: none; }
   .dashboard-route-card__icon { width:33px; height:33px; }
   .dashboard-route-card__action { font-size:9px; }
 }
-.dashboard-route-card:focus-visible { outline:3px solid #a9edff; outline-offset:3px; }
-
 .home-section { margin-top: 20px; }
 .section-heading { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 10px; }
 .section-heading h2 { margin: 0; font-size: 15px; }
