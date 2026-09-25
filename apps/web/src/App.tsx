@@ -8,7 +8,6 @@ import {
   Home,
   Landmark,
   LineChart,
-  Play,
   ShieldCheck,
   Sparkles,
   Target,
@@ -197,20 +196,7 @@ function HomePage() {
         </NavLink>
       </header>
 
-      <section className="continue-card">
-        <div className="continue-card__glow" />
-        <div className="continue-card__content">
-          <span className="section-kicker">Продолжить обучение</span>
-          <strong>{data.continueLesson.courseTitle}</strong>
-          <span className="muted-on-dark">Урок {data.continueLesson.lessonNumber} из {data.continueLesson.totalCourseLessons}</span>
-          <Progress value={data.continueLesson.progressPercent} dark />
-        </div>
-        <img className="continue-card__robot" src={robotAssets.waving} alt="Крипто-помощник машет рукой" />
-        <NavLink className="continue-card__action" to={`/lessons/${data.continueLesson.id}`} aria-label="Продолжить урок">
-          <Play size={17} fill="currentColor" />
-        </NavLink>
-      </section>
-      <RouteNextStep />
+      <RouteNextStep dashboardLesson={data.continueLesson} />
 
       <section className="home-section">
         <div className="section-heading">
