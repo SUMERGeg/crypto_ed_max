@@ -195,7 +195,7 @@ function HomePage() {
         </NavLink>
       </header>
 
-      <RouteNextStep dashboardLesson={data.continueLesson} />
+      <RouteNextStep dashboardLesson={data.continueLesson} routeViewed={data.routeViewed} />
 
       <section className="home-section">
         <div className="section-heading">

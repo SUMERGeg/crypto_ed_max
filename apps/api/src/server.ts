@@ -235,6 +235,11 @@ app.get("/api/v1/route", async (_request, response) => {
     completedScenarioIds: simulations.map((item) => item.scenarioId),
   }));
 });
+app.post("/api/v1/route/view", async (_request, response) => {
+  const currentUser = requestUser(response);
+  await progressRepository.markRouteViewed(currentUser.id, currentUser.displayName);
+  response.sendStatus(204);
+});
 
 app.get("/api/v1/onboarding", async (_request, response) => {
   response.json(await onboardingRepository.get(requestUser(response).id));

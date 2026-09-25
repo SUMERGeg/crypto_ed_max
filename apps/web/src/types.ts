@@ -305,6 +305,7 @@ export type RecommendedRoute = {
 
 export type HomeData = {
   user: { id: string; displayName: string };
+  routeViewed: boolean;
   continueLesson: {
     id: string;
     courseId: string;

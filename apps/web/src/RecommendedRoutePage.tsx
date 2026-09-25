@@ -31,7 +31,11 @@ export function RecommendedRoutePage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    api.route(controller.signal).then((route) => { setData(route); setError(false); }).catch((reason: unknown) => {
+    api.route(controller.signal).then((route) => {
+      setData(route);
+      setError(false);
+      void api.markRouteViewed().catch(() => {});
+    }).catch((reason: unknown) => {
       if (reason instanceof DOMException && reason.name === "AbortError") return;
       setError(true);
     });

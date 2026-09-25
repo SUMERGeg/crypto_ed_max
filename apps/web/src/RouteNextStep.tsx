@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, ShieldCheck, TrendingUp } from "lucide-react";
+import { ArrowRight, BookOpen, LockKeyhole, Play, ShieldCheck, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { api } from "./api";
@@ -8,16 +8,33 @@ import type { HomeData, RecommendedRoute } from "./types";
 
 type RouteNextStepProps = {
   dashboardLesson?: HomeData["continueLesson"];
+  routeViewed?: boolean;
 };
 
-export function RouteNextStep({ dashboardLesson }: RouteNextStepProps) {
+export function RouteNextStep({ dashboardLesson, routeViewed }: RouteNextStepProps) {
   const [route, setRoute] = useState<RecommendedRoute | null>(null);
+  const shouldLoadRoute = !dashboardLesson || routeViewed !== false;
   useEffect(() => {
+    if (!shouldLoadRoute) return;
     const controller = new AbortController();
     api.route(controller.signal).then(setRoute).catch(() => setRoute(null));
     return () => controller.abort();
-  }, []);
+  }, [shouldLoadRoute]);
   const stop = route?.currentIndex === null ? null : route?.stops[route.currentIndex];
+  if (dashboardLesson && routeViewed === false) {
+    return <NavLink className="dashboard-route-card dashboard-route-card--invite" to="/route">
+      <span className="dashboard-route-card__invite-copy">
+        <strong>Твой учебный маршрут</strong>
+        <span>Посмотри, какие уроки и задания ждут тебя дальше.</span>
+      </span>
+      <span className="dashboard-route-card__spark dashboard-route-card__spark--one" aria-hidden="true">✦</span>
+      <span className="dashboard-route-card__spark dashboard-route-card__spark--two" aria-hidden="true">✦</span>
+      <span className="dashboard-route-card__spark dashboard-route-card__spark--three" aria-hidden="true">✦</span>
+      <img className="dashboard-route-card__robot" src={robotAssets.route} alt="Крипто-помощник приглашает открыть маршрут" loading="eager" />
+      <span className="dashboard-route-card__invite-steps" aria-hidden="true"><i><Play size={14}/></i><i><BookOpen size={14}/></i><i><LockKeyhole size={14}/></i></span>
+      <span className="dashboard-route-card__invite-action">Открыть маршрут <ArrowRight size={19}/></span>
+    </NavLink>;
+  }
   if (dashboardLesson) {
     const nextStop = stop;
     const Icon = !nextStop || nextStop.type === "LESSON" ? BookOpen : nextStop.type === "SECURITY_CASE" ? ShieldCheck : TrendingUp;

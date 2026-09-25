@@ -24,10 +24,21 @@ export interface ProgressRepository {
   getSnapshot(userId: string, displayName: string): Promise<ProgressSnapshot>;
   openLesson(userId: string, displayName: string, lessonId: string): Promise<void>;
   recordQuizAttempt(userId: string, displayName: string, attempt: QuizAttemptRecord, completedLesson: boolean): Promise<void>;
+  hasViewedRoute(userId: string): Promise<boolean>;
+  markRouteViewed(userId: string, displayName: string): Promise<void>;
 }
 
-class MemoryProgressRepository implements ProgressRepository {
+export class MemoryProgressRepository implements ProgressRepository {
   private readonly progress = new Map<string, ProgressSnapshot>();
+  private readonly viewedRoutes = new Set<string>();
+
+  async hasViewedRoute(userId: string): Promise<boolean> {
+    return this.viewedRoutes.has(userId);
+  }
+
+  async markRouteViewed(userId: string): Promise<void> {
+    this.viewedRoutes.add(userId);
+  }
 
   async getSnapshot(userId: string, _displayName: string): Promise<ProgressSnapshot> {
     const existing = this.progress.get(userId);
@@ -66,6 +77,18 @@ class PostgresProgressRepository implements ProgressRepository {
   async migrate() {
     const migration = await readFile(new URL("../migrations/0001_learning_progress.sql", import.meta.url), "utf8");
     await this.pool.query(migration);
+    const routeMigration = await readFile(new URL("../migrations/0008_route_viewed.sql", import.meta.url), "utf8");
+    await this.pool.query(routeMigration);
+  }
+
+  async hasViewedRoute(userId: string): Promise<boolean> {
+    const result = await this.pool.query<{ route_viewed_at: Date | null }>("SELECT route_viewed_at FROM users WHERE id = $1", [userId]);
+    return Boolean(result.rows[0]?.route_viewed_at);
+  }
+
+  async markRouteViewed(userId: string, displayName: string): Promise<void> {
+    await this.ensureUser(userId, displayName);
+    await this.pool.query("UPDATE users SET route_viewed_at = COALESCE(route_viewed_at, NOW()) WHERE id = $1", [userId]);
   }
 
   private async ensureUser(userId: string, displayName: string) {

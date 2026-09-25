@@ -719,10 +719,12 @@ export async function submitQuiz(quizId: string, answers: Array<{ questionId: st
 
 export async function getHome(currentUser: AppUser) {
   const snapshot = await snapshotFor(currentUser);
+  const routeViewed = await progressRepository!.hasViewedRoute(currentUser.id);
   const continueLesson = lessons.find((item) => item.id === snapshot.lastOpenedLessonId) ?? lessons[0]!;
   const course = courseCatalog.find((item) => item.id === continueLesson.courseId)!;
   return {
     user: currentUser,
+    routeViewed,
     continueLesson: {
       id: continueLesson.id,
       courseId: continueLesson.courseId,

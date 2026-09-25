@@ -80,6 +80,7 @@ export const api = {
   threat: (threatId: string, signal?: AbortSignal) => getJson<ThreatCard>(`/security/threats/${encodeURIComponent(threatId)}`, signal),
   profile: (signal?: AbortSignal) => getJson<ProfileData>("/profile", signal),
   route: (signal?: AbortSignal) => getJson<RecommendedRoute>("/route", signal),
+  markRouteViewed: () => sendJson<void>("/route/view", "POST"),
   onboarding: (signal?: AbortSignal) => getJson<OnboardingState>("/onboarding", signal),
   saveOnboarding: (status: Exclude<OnboardingStatus, "NOT_STARTED">, step: number) => sendJson<OnboardingState>("/onboarding", "POST", { status, step }),
   careerOverview: (signal?: AbortSignal) => getJson<CareerOverview>("/career", signal),

@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { test } from "node:test";
 import { getHome, getLesson, getQuizByLesson, initializeLearningState, lessons, openLesson } from "./data.js";
-import type { ProgressRepository, ProgressSnapshot, QuizAttemptRecord } from "./persistence.js";
+import { MemoryProgressRepository, type ProgressRepository, type ProgressSnapshot, type QuizAttemptRecord } from "./persistence.js";
 
 class TestProgressRepository implements ProgressRepository {
   private readonly snapshots = new Map<string, ProgressSnapshot>();
+  private readonly viewedRoutes = new Set<string>();
   async getSnapshot(userId: string) {
     const snapshot = this.snapshots.get(userId) ?? { completedLessonIds: [], openedLessonIds: [], lastOpenedLessonId: null, quizAttempts: [] };
     return structuredClone(snapshot);
@@ -22,7 +23,28 @@ class TestProgressRepository implements ProgressRepository {
     if (completed) snapshot.completedLessonIds.push(attempt.lessonId);
     this.snapshots.set(userId, snapshot);
   }
+  async hasViewedRoute(userId: string) { return this.viewedRoutes.has(userId); }
+  async markRouteViewed(userId: string) { this.viewedRoutes.add(userId); }
 }
+
+test("route invitation is shown until that learner opens the route", async () => {
+  const repository = new TestProgressRepository();
+  await initializeLearningState(repository);
+  const anna = { id: "max:101", displayName: "Анна" };
+  const boris = { id: "max:202", displayName: "Борис" };
+  assert.equal((await getHome(anna)).routeViewed, false);
+  await repository.markRouteViewed(anna.id);
+  assert.equal((await getHome(anna)).routeViewed, true);
+  assert.equal((await getHome(boris)).routeViewed, false);
+});
+
+test("route view state persists per learner in the memory repository", async () => {
+  const repository = new MemoryProgressRepository();
+  assert.equal(await repository.hasViewedRoute("max:101"), false);
+  await repository.markRouteViewed("max:101");
+  assert.equal(await repository.hasViewedRoute("max:101"), true);
+  assert.equal(await repository.hasViewedRoute("max:202"), false);
+});
 
 test("MAX learners see their own names and lesson progress", async () => {
   await initializeLearningState(new TestProgressRepository());
