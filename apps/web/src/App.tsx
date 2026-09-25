@@ -189,7 +189,6 @@ function HomePage() {
         <div>
           <span className="eyebrow eyebrow--dark">Твой учебный маршрут</span>
           <h1>Привет, {data.user.displayName}! <span aria-hidden="true">👋</span></h1>
-          <p>Продолжим разбираться без спешки?</p>
         </div>
         <NavLink className="icon-button icon-button--dark" to="/profile" aria-label="Открыть профиль">
           <CircleUserRound size={19} />

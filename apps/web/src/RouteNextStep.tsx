@@ -27,19 +27,20 @@ export function RouteNextStep({ dashboardLesson }: RouteNextStepProps) {
     const number = nextStop ? `${nextStop.number}/${route?.total ?? ""}` : `${dashboardLesson.lessonNumber}/${dashboardLesson.totalCourseLessons}`;
 
     return <NavLink className="dashboard-route-card" to={target}>
-      <div className="dashboard-route-card__content">
-        <span className="dashboard-route-card__kicker">Продолжить обучение</span>
+      <div className="dashboard-route-card__current">
+        <span className="dashboard-route-card__kicker">Твой учебный маршрут</span>
         <strong>{dashboardLesson.courseTitle}</strong>
         <span className="dashboard-route-card__lesson">Урок {dashboardLesson.lessonNumber} из {dashboardLesson.totalCourseLessons}</span>
         <span className="dashboard-route-card__progress"><i style={{ width: `${dashboardLesson.progressPercent}%` }} /></span>
-        <span className="dashboard-route-card__divider" />
-        <span className="dashboard-route-card__next">
-          <Icon size={23} />
-          <span><small>Следующий шаг маршрута</small><strong>{title}</strong><em>{nextLabel} · {number}</em></span>
-        </span>
       </div>
       <img className="dashboard-route-card__robot" src={robotAssets.waving} alt="Крипто-помощник показывает маршрут" />
-      <span className="dashboard-route-card__action">Следующий шаг маршрута <ArrowRight size={21} /></span>
+      <span className="dashboard-route-card__coin dashboard-route-card__coin--bitcoin" aria-hidden="true">₿</span>
+      <span className="dashboard-route-card__coin dashboard-route-card__coin--ethereum" aria-hidden="true">◆</span>
+      <span className="dashboard-route-card__next">
+        <span className="dashboard-route-card__icon"><Icon size={22} /></span>
+        <span className="dashboard-route-card__details"><small>Следующий шаг маршрута</small><strong>{title}</strong><em>{nextLabel} · {number}</em></span>
+        <span className="dashboard-route-card__action">Следующий шаг маршрута <ArrowRight size={19} /></span>
+      </span>
     </NavLink>;
   }
 
