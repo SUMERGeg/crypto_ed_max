@@ -4,6 +4,15 @@ import { apiErrorCode, botCommands, buildBotReply, configureBot, createBotHandle
 import { routeCatalog } from "./route-data.js";
 
 const state = { completedLessonIds: [], completedCaseIds: [], completedScenarioIds: [], routeViewed: false };
+test("app buttons include the real bot username and retain launch destinations", async () => {
+  let username: string | undefined;
+  await configureBot("test", "https://example.com", "secret", (_id, value) => { username = value; }, () => {}, async (_token, path) => path === "/me" ? { user_id: 7, username: "@crypto_test_bot" } : { success: true });
+  assert.equal(username, "crypto_test_bot");
+  const reply = buildBotReply("/start", state, 7, username);
+  const buttons = reply.attachments[0]!.payload.buttons.flat();
+  assert.deepEqual(buttons.map(button => button.payload), ["home", "route", "profile"]);
+  assert.ok(buttons.every(button => button.web_app === "crypto_test_bot" && button.contact_id === 7));
+});
 test("rejected keyboard falls back to text, without repeating successful messages", async () => {
   const bodies: unknown[] = [];
   const reply = buildBotReply("/start", state, 7);

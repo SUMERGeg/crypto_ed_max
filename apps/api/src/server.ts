@@ -71,6 +71,7 @@ app.use(express.json({ limit: "32kb" }));
 
 const botSecret = botToken ? webhookSecret(botToken) : "";
 let botId: number | null = null;
+let botUsername: string | undefined;
 const handleBotUpdate = createBotHandler(async (currentUser) => {
   const [learning, cases, simulations, routeViewed] = await Promise.all([
     progressRepository.getSnapshot(currentUser.id, currentUser.displayName),
@@ -81,7 +82,7 @@ const handleBotUpdate = createBotHandler(async (currentUser) => {
   return { completedLessonIds: learning.completedLessonIds, completedCaseIds: cases, completedScenarioIds: simulations.map(item => item.scenarioId), routeViewed };
 }, async (userId, reply) => {
   await sendBotReply(botToken, userId, reply, console.log);
-}, () => botId);
+}, () => botId, () => botUsername);
 
 app.post("/api/v1/bot/webhook", async (request, response) => {
   if (!validWebhookSecret(request.header("X-Max-Bot-Api-Secret"), botSecret)) {
@@ -394,7 +395,7 @@ app.listen(port, () => {
     void (async () => {
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          await configureBot(botToken, publicUrl, botSecret, id => { botId = id; }, console.log);
+          await configureBot(botToken, publicUrl, botSecret, (id, username) => { botId = id; botUsername = username; }, console.log);
           return;
         } catch (error) {
           console.error(`[bot] configuration failed (attempt ${attempt + 1}/3): ${safeBotError(error)}`);

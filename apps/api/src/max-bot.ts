@@ -12,7 +12,7 @@ export const botCommands = [
   { name: "help", description: "Помощь и команды" },
 ];
 type State = Parameters<typeof buildRecommendedRoute>[0] & { routeViewed: boolean };
-type Button = { type: "open_app"; text: string; contact_id: number; payload: string };
+type Button = { type: "open_app"; text: string; contact_id: number; web_app?: string; payload: string };
 export type BotReply = { text: string; attachments: { type: "inline_keyboard"; payload: { buttons: Button[][] } }[] };
 
 export function webhookSecret(token: string) {
@@ -23,10 +23,10 @@ export function validWebhookSecret(actual: string | undefined, expected: string)
   const a = Buffer.from(actual), b = Buffer.from(expected);
   return a.length === b.length && timingSafeEqual(a, b);
 }
-export function buildBotReply(command: string, state: State, botId: number): BotReply {
+export function buildBotReply(command: string, state: State, botId: number, botUsername?: string): BotReply {
   const route = buildRecommendedRoute(state);
   const next = route.currentIndex === null ? undefined : route.stops[route.currentIndex];
-  const button = (text: string, payload: string): Button[] => [{ type: "open_app", text, contact_id: botId, payload }];
+  const button = (text: string, payload: string): Button[] => [{ type: "open_app", text, contact_id: botId, ...(botUsername ? { web_app: botUsername } : {}), payload }];
   const nextPayload = next ? `${next.type === "LESSON" ? "lesson" : next.type === "SECURITY_CASE" ? "case" : "replay"}:${next.contentId}` : "route";
   let text: string;
   let buttons: Button[][];
@@ -47,7 +47,7 @@ export function buildBotReply(command: string, state: State, botId: number): Bot
   return { text, attachments: [{ type: "inline_keyboard", payload: { buttons } }] };
 }
 
-export function createBotHandler(loadState: (user: AppUser) => Promise<State>, send: (userId: number, reply: BotReply) => Promise<void>, getBotId: () => number | null) {
+export function createBotHandler(loadState: (user: AppUser) => Promise<State>, send: (userId: number, reply: BotReply) => Promise<void>, getBotId: () => number | null, getBotUsername: () => string | undefined = () => undefined) {
   const processed = new Map<string, number>();
   const pending = new Map<string, Promise<void>>();
   return async (update: any) => {
@@ -68,7 +68,7 @@ export function createBotHandler(loadState: (user: AppUser) => Promise<State>, s
       const user = { id: `max:${sender.user_id}`, displayName: typeof sender.first_name === "string" ? sender.first_name : "Ученик" };
       const text = started ? "/start" : update.message?.body?.text;
       const command = typeof text === "string" ? text.trim().split(/\s+/)[0]!.toLowerCase().replace(/@[^\s]+$/, "") : "/help";
-      await send(sender.user_id, buildBotReply(command, await loadState(user), botId));
+      await send(sender.user_id, buildBotReply(command, await loadState(user), botId, getBotUsername()));
       processed.set(key, Date.now());
       if (processed.size > 5000) processed.delete(processed.keys().next().value!);
     })();
@@ -138,12 +138,13 @@ export async function sendBotReply(token: string, userId: number, reply: BotRepl
   }
 }
 
-export async function configureBot(token: string, publicUrl: string, secret: string, setBotId: (id: number) => void, log: (message: string) => void, api = maxBotRequest) {
+export async function configureBot(token: string, publicUrl: string, secret: string, setBotId: (id: number, username?: string) => void, log: (message: string) => void, api = maxBotRequest) {
   const url = new URL("/api/v1/bot/webhook", publicUrl);
   if (url.protocol !== "https:") throw new MaxApiError("webhook URL", "HTTPS required");
   const me = await api(token, "/me");
   if (!Number.isSafeInteger(me.user_id)) throw new MaxApiError("GET /me", "invalid bot ID");
-  setBotId(me.user_id);
+  const username = typeof me.username === "string" ? me.username.replace(/^@/, "").trim() : undefined;
+  setBotId(me.user_id, username || undefined);
   await api(token, "/subscriptions", "POST", { url: url.href, update_types: ["message_created", "bot_started"], secret });
   log("[bot] webhook configured");
   try {
