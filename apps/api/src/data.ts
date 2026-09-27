@@ -2,6 +2,7 @@ import { type CryptoLessonPageSpec, type CryptoLessonSpec } from "./crypto-lesso
 import { sourceBlockchainLessonSpecs, sourceCryptoLessonSpecs } from "./source-lessons.js";
 import { financeLessonSpecs, type FinanceLessonSpec } from "./finance-lessons.js";
 import { lawLessonSpecs } from "./law-lessons.js";
+import { structureLawPage } from "./law-page-format.js";
 
 type LessonStatus = "NOT_STARTED" | "OPENED" | "COMPLETED";
 type SectionType = "TEXT" | "EXAMPLE" | "KEY_TAKEAWAY" | "RISK" | "BULLETS";
@@ -198,13 +199,10 @@ function expandedLawLesson(spec: CryptoLessonSpec): LessonRecord {
     "налоговый результат", "подтверждённые расходы", "доход", "декларация", "реестр", "майнинг",
     "дата вступления в силу", "переходные положения", "юридическое лицо", "правовой статус",
   ];
-  const formatLawPage = (page: CryptoLessonPageSpec) => {
-    const structured = page.body.split("\n\n").map(paragraph => {
-      if (/^Пример:/.test(paragraph) || page.sectionType === "KEY_TAKEAWAY") return `> ${paragraph}`;
-      return paragraph;
-    }).join("\n\n");
+  const formatLawPage = (page: CryptoLessonPageSpec, index: number) => {
+    const structured = structureLawPage(page, spec.id, index + 1);
     return formatSourceLessonBody(structured, lawEmphasisTerms)
-      .replace(/pravo\.gov\.ru/g, "[pravo.gov.ru](https://pravo.gov.ru/)")
+      .replace(/publication\.pravo\.gov\.ru|pravo\.gov\.ru/g, domain => `[${domain}](https://${domain}/)`)
       .replace(/cbr\.ru/g, "[cbr.ru](https://www.cbr.ru/)")
       .replace(/nalog\.gov\.ru/g, "[nalog.gov.ru](https://www.nalog.gov.ru/)")
       .replace(/(?:\*\*)?(Федеральный закон № 282-ФЗ|закон № 282-ФЗ)(?:\*\*)?/g, "[$1](https://publication.pravo.gov.ru/document/0001202608040007)")
@@ -219,8 +217,8 @@ function expandedLawLesson(spec: CryptoLessonSpec): LessonRecord {
     shortDescription: spec.shortDescription,
     durationMinutes: spec.durationMinutes,
     robotTip: spec.robotTip,
-    sections: spec.pages.map((page) => ({ type: page.sectionType, title: page.title, body: formatLawPage(page) })),
-    detailedPages: spec.pages.map((page) => ({ ...page, body: formatLawPage(page) })),
+    sections: spec.pages.map((page, index) => ({ type: page.sectionType, title: page.title, body: formatLawPage(page, index) })),
+    detailedPages: spec.pages.map((page, index) => ({ ...page, body: formatLawPage(page, index) })),
     checkpointAfter: spec.checkpointAfter,
     quiz: { id: `quiz-${spec.id}`, title: `Итоговый тест: ${spec.title}`, questions },
   };
