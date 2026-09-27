@@ -1,4 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { Agent, request } from "node:https";
+import { rootCertificates } from "node:tls";
 import { buildRecommendedRoute } from "./route-data.js";
 import type { AppUser } from "./max-auth.js";
 
@@ -74,13 +77,60 @@ export function createBotHandler(loadState: (user: AppUser) => Promise<State>, s
   };
 }
 
-export async function maxBotRequest(token: string, path: string, method = "GET", body?: unknown) {
-  const response = await fetch(`https://platform-api2.max.ru${path}`, {
-    method, headers: { Authorization: token, "Content-Type": "application/json" },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(10_000),
+// Trust the official Russian CA only for this client's connections, not process-wide.
+const maxAgent = new Agent({ keepAlive: true, ca: [...rootCertificates, readFileSync(new URL("../../../certificates/russian-trusted-root-ca.pem", import.meta.url), "utf8")] });
+
+export class MaxApiError extends Error {
+  constructor(public readonly operation: string, public readonly reason: string) {
+    super(`${operation}: ${reason}`);
+  }
+}
+export function safeBotError(error: unknown) {
+  return error instanceof MaxApiError ? error.message : "configuration or application error";
+}
+
+export function maxBotRequest(token: string, path: string, method = "GET", body?: unknown): Promise<any> {
+  const operation = `${method} ${path.split("?")[0]}`;
+  return new Promise((resolve, reject) => {
+    const req = request(new URL(path, "https://platform-api2.max.ru"), {
+      method, agent: maxAgent, headers: { Authorization: token, "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(10_000),
+    }, response => {
+      const chunks: Buffer[] = [];
+      response.on("data", chunk => chunks.push(Buffer.from(chunk)));
+      response.on("error", () => reject(new MaxApiError(operation, "response interrupted")));
+      response.on("end", () => {
+        if (!response.statusCode || response.statusCode < 200 || response.statusCode >= 300) {
+          reject(new MaxApiError(operation, `HTTP ${response.statusCode ?? "unknown"}`));
+          return;
+        }
+        try {
+          const result = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+          if (result.success === false) reject(new MaxApiError(operation, "API rejected request"));
+          else resolve(result);
+        } catch { reject(new MaxApiError(operation, "invalid JSON response")); }
+      });
+    });
+    req.on("error", (error: NodeJS.ErrnoException) => {
+      const code = /^[A-Z0-9_]+$/.test(error.code ?? "") ? error.code! : "CONNECTION_ERROR";
+      reject(new MaxApiError(operation, code));
+    });
+    req.end(body === undefined ? undefined : JSON.stringify(body));
   });
-  if (!response.ok) throw new Error(`MAX API status ${response.status}`);
-  const result = await response.json();
-  if (result.success === false) throw new Error("MAX API rejected request");
-  return result;
+}
+
+export async function configureBot(token: string, publicUrl: string, secret: string, setBotId: (id: number) => void, log: (message: string) => void, api = maxBotRequest) {
+  const url = new URL("/api/v1/bot/webhook", publicUrl);
+  if (url.protocol !== "https:") throw new MaxApiError("webhook URL", "HTTPS required");
+  const me = await api(token, "/me");
+  if (!Number.isSafeInteger(me.user_id)) throw new MaxApiError("GET /me", "invalid bot ID");
+  setBotId(me.user_id);
+  await api(token, "/subscriptions", "POST", { url: url.href, update_types: ["message_created", "bot_started"], secret });
+  log("[bot] webhook configured");
+  try {
+    await api(token, "/me/commands", "PATCH", { commands: botCommands });
+    log("[bot] command menu configured");
+  } catch (error) {
+    log(`[bot] command menu unavailable; webhook remains active: ${safeBotError(error)}`);
+  }
 }

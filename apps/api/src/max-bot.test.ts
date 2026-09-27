@@ -1,9 +1,31 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { botCommands, buildBotReply, createBotHandler, validWebhookSecret, webhookSecret } from "./max-bot.js";
+import { botCommands, buildBotReply, configureBot, createBotHandler, MaxApiError, safeBotError, validWebhookSecret, webhookSecret } from "./max-bot.js";
 import { routeCatalog } from "./route-data.js";
 
 const state = { completedLessonIds: [], completedCaseIds: [], completedScenarioIds: [], routeViewed: false };
+test("command menu failure does not prevent webhook registration", async () => {
+  const calls: string[] = [];
+  const logs: string[] = [];
+  let id: number | null = null;
+  await configureBot("test-token", "https://example.com", "test-secret", value => { id = value; }, message => logs.push(message), async (_token, path) => {
+    calls.push(path);
+    if (path === "/me") return { user_id: 7 };
+    if (path === "/me/commands") throw new MaxApiError("PATCH /me/commands", "HTTP 403");
+    return { success: true };
+  });
+  assert.equal(id, 7);
+  assert.deepEqual(calls, ["/me", "/subscriptions", "/me/commands"]);
+  assert.ok(logs.some(message => message.includes("webhook remains active")));
+});
+test("webhook errors stay visible; arbitrary errors never expose secrets", async () => {
+  await assert.rejects(configureBot("token", "https://example.com", "secret", () => {}, () => {}, async (_token, path) => {
+    if (path === "/me") return { user_id: 7 };
+    throw new MaxApiError("POST /subscriptions", "HTTP 401");
+  }), /POST \/subscriptions: HTTP 401/);
+  assert.equal(safeBotError(new Error("Authorization: secret-token")), "configuration or application error");
+  assert.equal(safeBotError(new MaxApiError("GET /me", "UNABLE_TO_GET_ISSUER_CERT_LOCALLY")), "GET /me: UNABLE_TO_GET_ISSUER_CERT_LOCALLY");
+});
 test("four commands, no check; webhook authentication", () => {
   assert.deepEqual(botCommands.map(c => c.name), ["start", "route", "progress", "help"]);
   const secret = webhookSecret("test-token");

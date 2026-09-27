@@ -46,7 +46,7 @@ import { createCareerRepository } from "./career-persistence.js";
 import { createGuestSession, createMaxSession, resolveApiUser, verifyGuestSession, verifyMaxInitData, type AppUser } from "./max-auth.js";
 import { createOnboardingRepository, type OnboardingStatus } from "./onboarding-persistence.js";
 import { buildRecommendedRoute } from "./route-data.js";
-import { botCommands, createBotHandler, maxBotRequest, validWebhookSecret, webhookSecret } from "./max-bot.js";
+import { configureBot, createBotHandler, maxBotRequest, safeBotError, validWebhookSecret, webhookSecret } from "./max-bot.js";
 
 try {
   loadEnvFile(fileURLToPath(new URL("../../../.env", import.meta.url)));
@@ -91,8 +91,8 @@ app.post("/api/v1/bot/webhook", async (request, response) => {
   try {
     await handleBotUpdate(request.body);
     response.sendStatus(200);
-  } catch {
-    console.error("[bot] update failed; MAX can retry delivery");
+  } catch (error) {
+    console.error(`[bot] update failed; MAX can retry delivery: ${safeBotError(error)}`);
     response.sendStatus(503);
   }
 });
@@ -394,17 +394,10 @@ app.listen(port, () => {
     void (async () => {
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          const url = new URL("/api/v1/bot/webhook", publicUrl);
-          if (url.protocol !== "https:") throw new Error("HTTPS required");
-          const me = await maxBotRequest(botToken, "/me");
-          if (!Number.isSafeInteger(me.user_id)) throw new Error("Invalid bot ID");
-          botId = me.user_id;
-          await maxBotRequest(botToken, "/me/commands", "PATCH", { commands: botCommands });
-          await maxBotRequest(botToken, "/subscriptions", "POST", { url: url.href, update_types: ["message_created", "bot_started"], secret: botSecret });
-          console.log("[bot] commands and webhook configured");
+          await configureBot(botToken, publicUrl, botSecret, id => { botId = id; }, console.log);
           return;
-        } catch {
-          console.error(`[bot] configuration failed (attempt ${attempt + 1}/3); check MAX token, HTTPS URL and API connectivity`);
+        } catch (error) {
+          console.error(`[bot] configuration failed (attempt ${attempt + 1}/3): ${safeBotError(error)}`);
           if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 5000));
         }
       }
