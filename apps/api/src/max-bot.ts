@@ -81,9 +81,15 @@ export function createBotHandler(loadState: (user: AppUser) => Promise<State>, s
 const maxAgent = new Agent({ keepAlive: true, ca: [...rootCertificates, readFileSync(new URL("../../../certificates/russian-trusted-root-ca.pem", import.meta.url), "utf8")] });
 
 export class MaxApiError extends Error {
-  constructor(public readonly operation: string, public readonly reason: string) {
+  constructor(public readonly operation: string, public readonly reason: string, public readonly status?: number) {
     super(`${operation}: ${reason}`);
   }
+}
+export function apiErrorCode(body: string) {
+  try {
+    const code: unknown = JSON.parse(body).code;
+    return typeof code === "string" && /^[a-zA-Z0-9_.-]{1,100}$/.test(code) ? ` (${code})` : "";
+  } catch { return ""; }
 }
 export function safeBotError(error: unknown) {
   return error instanceof MaxApiError ? error.message : "configuration or application error";
@@ -101,7 +107,8 @@ export function maxBotRequest(token: string, path: string, method = "GET", body?
       response.on("error", () => reject(new MaxApiError(operation, "response interrupted")));
       response.on("end", () => {
         if (!response.statusCode || response.statusCode < 200 || response.statusCode >= 300) {
-          reject(new MaxApiError(operation, `HTTP ${response.statusCode ?? "unknown"}`));
+          const code = apiErrorCode(Buffer.concat(chunks).toString("utf8"));
+          reject(new MaxApiError(operation, `HTTP ${response.statusCode ?? "unknown"}${code}`, response.statusCode));
           return;
         }
         try {
@@ -117,6 +124,18 @@ export function maxBotRequest(token: string, path: string, method = "GET", body?
     });
     req.end(body === undefined ? undefined : JSON.stringify(body));
   });
+}
+
+export async function sendBotReply(token: string, userId: number, reply: BotReply, log: (message: string) => void, api = maxBotRequest) {
+  const path = `/messages?user_id=${userId}`;
+  try {
+    await api(token, path, "POST", reply);
+  } catch (error) {
+    if (!(error instanceof MaxApiError) || error.status !== 400 || !reply.attachments.length) throw error;
+    log(`[bot] reply with keyboard rejected: ${safeBotError(error)}; trying text only`);
+    await api(token, path, "POST", { text: reply.text });
+    log("[bot] text-only reply sent");
+  }
 }
 
 export async function configureBot(token: string, publicUrl: string, secret: string, setBotId: (id: number) => void, log: (message: string) => void, api = maxBotRequest) {

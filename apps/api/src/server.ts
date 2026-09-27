@@ -46,7 +46,7 @@ import { createCareerRepository } from "./career-persistence.js";
 import { createGuestSession, createMaxSession, resolveApiUser, verifyGuestSession, verifyMaxInitData, type AppUser } from "./max-auth.js";
 import { createOnboardingRepository, type OnboardingStatus } from "./onboarding-persistence.js";
 import { buildRecommendedRoute } from "./route-data.js";
-import { configureBot, createBotHandler, maxBotRequest, safeBotError, validWebhookSecret, webhookSecret } from "./max-bot.js";
+import { configureBot, createBotHandler, safeBotError, sendBotReply, validWebhookSecret, webhookSecret } from "./max-bot.js";
 
 try {
   loadEnvFile(fileURLToPath(new URL("../../../.env", import.meta.url)));
@@ -80,7 +80,7 @@ const handleBotUpdate = createBotHandler(async (currentUser) => {
   ]);
   return { completedLessonIds: learning.completedLessonIds, completedCaseIds: cases, completedScenarioIds: simulations.map(item => item.scenarioId), routeViewed };
 }, async (userId, reply) => {
-  await maxBotRequest(botToken, `/messages?user_id=${userId}`, "POST", reply);
+  await sendBotReply(botToken, userId, reply, console.log);
 }, () => botId);
 
 app.post("/api/v1/bot/webhook", async (request, response) => {

@@ -1,9 +1,30 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { botCommands, buildBotReply, configureBot, createBotHandler, MaxApiError, safeBotError, validWebhookSecret, webhookSecret } from "./max-bot.js";
+import { apiErrorCode, botCommands, buildBotReply, configureBot, createBotHandler, MaxApiError, safeBotError, sendBotReply, validWebhookSecret, webhookSecret } from "./max-bot.js";
 import { routeCatalog } from "./route-data.js";
 
 const state = { completedLessonIds: [], completedCaseIds: [], completedScenarioIds: [], routeViewed: false };
+test("rejected keyboard falls back to text, without repeating successful messages", async () => {
+  const bodies: unknown[] = [];
+  const reply = buildBotReply("/start", state, 7);
+  await sendBotReply("test", 42, reply, () => {}, async (_token, _path, _method, body) => {
+    bodies.push(body);
+    if (bodies.length === 1) throw new MaxApiError("POST /messages", "HTTP 400", 400);
+    return {};
+  });
+  assert.deepEqual(bodies, [reply, { text: reply.text }]);
+  let calls = 0;
+  await sendBotReply("test", 42, reply, () => {}, async () => { calls++; return {}; });
+  assert.equal(calls, 1);
+  await assert.rejects(sendBotReply("test", 42, reply, () => {}, async () => {
+    throw new MaxApiError("POST /messages", "HTTP 401", 401);
+  }), /HTTP 401/);
+});
+test("API diagnostics show machine codes, never raw response text", () => {
+  assert.equal(apiErrorCode('{"code":"proto.payload","message":"secret-token"}'), " (proto.payload)");
+  assert.equal(apiErrorCode('{"code":"Authorization: secret-token"}'), "");
+  assert.equal(apiErrorCode("invalid body with secrets"), "");
+});
 test("command menu failure does not prevent webhook registration", async () => {
   const calls: string[] = [];
   const logs: string[] = [];
