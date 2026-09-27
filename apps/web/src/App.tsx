@@ -14,12 +14,12 @@ import {
   TrendingUp,
   WalletCards,
 } from "lucide-react";
-import { lazy, Suspense, useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
 import { robotAssets } from "./robot";
 import type { Course, HomeData } from "./types";
-import { currentMaxLaunchData } from "./max-client";
+import { currentMaxLaunchData, maxLaunchDestination } from "./max-client";
 import { RouteNextStep } from "./RouteNextStep";
 import { backDestination } from "./navigation";
 import { useTheme } from "./theme";
@@ -93,6 +93,13 @@ export function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme } = useTheme();
+  const launchHandled = useRef(false);
+  useEffect(() => {
+    if (launchHandled.current) return;
+    launchHandled.current = true;
+    const destination = maxLaunchDestination(currentMaxLaunchData());
+    if (destination) navigate(destination, { replace: true });
+  }, [navigate]);
   const showBottomNav = ["/", "/learn", "/practice", "/security", "/market", "/profile"].includes(location.pathname);
 
   useEffect(() => {

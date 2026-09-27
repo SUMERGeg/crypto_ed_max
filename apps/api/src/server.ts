@@ -46,6 +46,7 @@ import { createCareerRepository } from "./career-persistence.js";
 import { createGuestSession, createMaxSession, resolveApiUser, verifyGuestSession, verifyMaxInitData, type AppUser } from "./max-auth.js";
 import { createOnboardingRepository, type OnboardingStatus } from "./onboarding-persistence.js";
 import { buildRecommendedRoute } from "./route-data.js";
+import { botCommands, createBotHandler, maxBotRequest, validWebhookSecret, webhookSecret } from "./max-bot.js";
 
 try {
   loadEnvFile(fileURLToPath(new URL("../../../.env", import.meta.url)));
@@ -67,6 +68,34 @@ const webIndexPath = fileURLToPath(new URL("../../web/dist/index.html", import.m
 
 app.disable("x-powered-by");
 app.use(express.json({ limit: "32kb" }));
+
+const botSecret = botToken ? webhookSecret(botToken) : "";
+let botId: number | null = null;
+const handleBotUpdate = createBotHandler(async (currentUser) => {
+  const [learning, cases, simulations, routeViewed] = await Promise.all([
+    progressRepository.getSnapshot(currentUser.id, currentUser.displayName),
+    securityRepository.getCompletedCaseIds(currentUser.id),
+    listCompletedSimulations(currentUser.id),
+    progressRepository.hasViewedRoute(currentUser.id),
+  ]);
+  return { completedLessonIds: learning.completedLessonIds, completedCaseIds: cases, completedScenarioIds: simulations.map(item => item.scenarioId), routeViewed };
+}, async (userId, reply) => {
+  await maxBotRequest(botToken, `/messages?user_id=${userId}`, "POST", reply);
+}, () => botId);
+
+app.post("/api/v1/bot/webhook", async (request, response) => {
+  if (!validWebhookSecret(request.header("X-Max-Bot-Api-Secret"), botSecret)) {
+    response.sendStatus(403);
+    return;
+  }
+  try {
+    await handleBotUpdate(request.body);
+    response.sendStatus(200);
+  } catch {
+    console.error("[bot] update failed; MAX can retry delivery");
+    response.sendStatus(503);
+  }
+});
 
 app.get("/api/v1/health", (_request, response) => {
   response.json({ status: "ok", service: "crypto-education-api" });
@@ -360,4 +389,25 @@ await initializeCareerState(careerRepository);
 
 app.listen(port, () => {
   console.log(`[api] listening on http://localhost:${port}`);
+  const publicUrl = process.env.MAX_BOT_PUBLIC_URL ?? process.env.RENDER_EXTERNAL_URL;
+  if (botToken && publicUrl) {
+    void (async () => {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const url = new URL("/api/v1/bot/webhook", publicUrl);
+          if (url.protocol !== "https:") throw new Error("HTTPS required");
+          const me = await maxBotRequest(botToken, "/me");
+          if (!Number.isSafeInteger(me.user_id)) throw new Error("Invalid bot ID");
+          botId = me.user_id;
+          await maxBotRequest(botToken, "/me/commands", "PATCH", { commands: botCommands });
+          await maxBotRequest(botToken, "/subscriptions", "POST", { url: url.href, update_types: ["message_created", "bot_started"], secret: botSecret });
+          console.log("[bot] commands and webhook configured");
+          return;
+        } catch {
+          console.error(`[bot] configuration failed (attempt ${attempt + 1}/3); check MAX token, HTTPS URL and API connectivity`);
+          if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+      }
+    })();
+  }
 });
