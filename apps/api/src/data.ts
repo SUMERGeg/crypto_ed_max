@@ -103,7 +103,7 @@ function lesson(
   };
 }
 
-function formatSourceLessonBody(body: string) {
+function formatSourceLessonBody(body: string, extraEmphasisTerms: readonly string[] = []) {
   const paragraphs = body.split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean);
   const formatted: string[] = [];
   const isSentence = (paragraph: string) => /[.!?]$/.test(paragraph);
@@ -144,12 +144,30 @@ function formatSourceLessonBody(body: string) {
   }
 
   const withStructure = formatted.join("\n\n");
-  return ["Криптовалюта", "Bitcoin", "Ethereum", "блокчейн", "транзакция", "Proof of Work", "Proof of Stake", "BTC", "ETH"]
-    .reduce((result, term) => result.replaceAll(term, `**${term}**`), withStructure);
+  const emphasisTerms = [
+    "Криптовалюта", "Bitcoin", "Ethereum", "Proof of Work", "Proof of Stake", "BTC", "ETH",
+    "Распределённый", "блокчейне", "блокчейн", "транзакциях", "транзакция", "Реестр",
+    "приватный ключ", "Цифровая подпись", "node", "мемпул", "хеш",
+    ...extraEmphasisTerms,
+  ];
+  return emphasisTerms.reduce((result, term) => {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const exactTerm = new RegExp(`(^|[^\\p{L}\\p{N}_*])(${escaped})(?=$|[^\\p{L}\\p{N}_*])`, "giu");
+    return result.replace(exactTerm, (_match, prefix: string, match: string) => `${prefix}**${match}**`);
+  }, withStructure);
 }
 
 function expandedCryptoLesson(spec: CryptoLessonSpec, courseId = "crypto-basics"): LessonRecord {
-  const questions = spec.questions.map((item) => question(item.id, item.text, item.correct, item.wrong, item.explanation));
+  const questions = spec.questions.map((item, index) => {
+    const quizQuestion = question(item.id, item.text, item.correct, item.wrong, item.explanation);
+    if (courseId !== "blockchain") return quizQuestion;
+
+    const correctIndex = (spec.order + index) % quizQuestion.options.length;
+    const [correctOption, ...wrongOptions] = quizQuestion.options;
+    const options = [...wrongOptions];
+    options.splice(correctIndex, 0, correctOption!);
+    return { ...quizQuestion, options };
+  });
   return {
     id: spec.id,
     courseId,
@@ -167,6 +185,11 @@ function expandedCryptoLesson(spec: CryptoLessonSpec, courseId = "crypto-basics"
 
 function expandedLawLesson(spec: CryptoLessonSpec): LessonRecord {
   const questions = spec.questions.map((item) => question(item.id, item.text, item.correct, item.wrong, item.explanation));
+  const lawEmphasisTerms = [
+    "цифровая валюта", "цифровой валюты", "цифровой валюте", "цифровую валюту", "цифровой валютой", "цифровых валют",
+    "ЦФА", "цифровой рубль", "цифрового рубля", "цифровому рублю", "цифровым рублём",
+    "Банк России", "Банка России", "ФНС", "Федеральный закон № 282-ФЗ",
+  ];
   return {
     id: spec.id,
     courseId: "law-russia",
@@ -175,8 +198,8 @@ function expandedLawLesson(spec: CryptoLessonSpec): LessonRecord {
     shortDescription: spec.shortDescription,
     durationMinutes: spec.durationMinutes,
     robotTip: spec.robotTip,
-    sections: spec.pages.map((page) => ({ type: page.sectionType, title: page.title, body: page.body })),
-    detailedPages: spec.pages,
+    sections: spec.pages.map((page) => ({ type: page.sectionType, title: page.title, body: formatSourceLessonBody(page.body, lawEmphasisTerms) })),
+    detailedPages: spec.pages.map((page) => ({ ...page, body: formatSourceLessonBody(page.body, lawEmphasisTerms) })),
     checkpointAfter: spec.checkpointAfter,
     quiz: { id: `quiz-${spec.id}`, title: `Итоговый тест: ${spec.title}`, questions },
   };
