@@ -66,7 +66,8 @@ function questionsFrom(testBlock: string, lessonNumber: number): CryptoQuestionS
 
 function parseLesson(chunk: string, index: number): FinanceLessonSpec {
   const [theory = "", testBlock = ""] = chunk.split(/^## Тест к уроку \d+\s*$/m);
-  const title = theory.match(/^([^\n]+)$/m)?.[1]?.trim();
+  const rawTitle = theory.match(/^([^\n]+)$/m)?.[1]?.trim();
+  const title = rawTitle ? rawTitle[0] + rawTitle.slice(1).toLocaleLowerCase("ru") : undefined;
   const screens = theory.split(/(?:^|\n)### Экран[^\n]*\n/g).slice(1);
   if (!title || screens.length !== 7) throw new Error(`Не удалось разобрать урок ${index + 1}`);
   const meta = lessonMeta[index]!;

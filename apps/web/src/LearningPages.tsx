@@ -27,11 +27,14 @@ function isAbortError(reason: unknown) {
 }
 
 function InlineLessonMarkdown({ text }: { text: string }) {
-  return <>{text.split(/(\*\*[^*]+\*\*)/g).map((part, index) => (
+  return <>{text.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\(https:\/\/[^)]+\))/g).map((part, index) => {
+    const link = /^\[([^\]]+)\]\((https:\/\/[^)]+)\)$/.exec(part);
+    if (link) return <a key={index} href={link[2]} target="_blank" rel="noopener noreferrer">{link[1]}</a>;
+    return (
     part.startsWith("**") && part.endsWith("**")
       ? <strong key={index}>{part.slice(2, -2)}</strong>
       : part
-  ))}</>;
+  ); })}</>;
 }
 
 function LessonMarkdown({ body }: { body: string }) {
@@ -233,7 +236,6 @@ export function LessonPage() {
               <span className="lesson-page-card__icon">
                 {page.sectionType === "EXAMPLE" ? <Lightbulb size={21} /> : page.sectionType === "RISK" ? <TriangleAlert size={21} /> : page.sectionType === "KEY_TAKEAWAY" ? <Sparkles size={21} /> : <BookOpen size={21} />}
               </span>
-              <span className="lesson-page-card__eyebrow">{page.eyebrow}</span>
               <h2>{page.title}</h2>
               {page.illustration && (
                 <LessonIllustration key={page.illustration.src} {...page.illustration}/>

@@ -103,7 +103,7 @@ function lesson(
   };
 }
 
-function formatSourceLessonBody(body: string, extraEmphasisTerms: readonly string[] = []) {
+export function formatSourceLessonBody(body: string, extraEmphasisTerms: readonly string[] = []) {
   const paragraphs = body.split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean);
   const formatted: string[] = [];
   const isSentence = (paragraph: string) => /[.!?]$/.test(paragraph);
@@ -146,22 +146,28 @@ function formatSourceLessonBody(body: string, extraEmphasisTerms: readonly strin
   const withStructure = formatted.join("\n\n");
   const emphasisTerms = [
     "Криптовалюта", "Bitcoin", "Ethereum", "Proof of Work", "Proof of Stake", "BTC", "ETH",
-    "Распределённый", "блокчейне", "блокчейн", "транзакциях", "транзакция", "Реестр",
+    "Распределённый", "блокчейн[\\p{L}]*(?:-[\\p{L}]+)*", "транзакци[\\p{L}]*", "Реестр",
     "приватный ключ", "Цифровая подпись", "node", "мемпул", "хеш",
+    "Solana", "SOL", "GAME", "Utility-токен", "Governance-токен", "Стейблкоин", "NFT",
     ...extraEmphasisTerms,
   ];
-  return emphasisTerms.reduce((result, term) => {
-    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const exactTerm = new RegExp(`(^|[^\\p{L}\\p{N}_*])(${escaped})(?=$|[^\\p{L}\\p{N}_*])`, "giu");
-    return result.replace(exactTerm, (_match, prefix: string, match: string) => `${prefix}**${match}**`);
-  }, withStructure);
+  const patterns = emphasisTerms.map(term => term.startsWith("блокчейн[") || term.startsWith("транзакци[") ? term : term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  patterns.unshift("\\d+(?:[,.]\\d+)?(?:[ \\u00a0]\\d{3})* BTC");
+  const terms = new RegExp(`(^|[^\\p{L}\\p{N}_])(${patterns.join("|")})(?=$|[^\\p{L}\\p{N}_-])`, "giu");
+  return withStructure.split("\n\n").map(paragraph => {
+    if (paragraph.startsWith("> ") && paragraph.includes("→")) {
+      return paragraph.length < 85 ? paragraph.replace(/> ([^\n]+)/g, "> **$1**") : paragraph;
+    }
+    return paragraph.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\(https:\/\/[^)]+\))/g).map(part => {
+    if (part.startsWith("**") || part.startsWith("[")) return part;
+    return part.replace(terms, (_match, prefix: string, match: string) => `${prefix}**${match}**`);
+    }).join("");
+  }).join("\n\n");
 }
 
 function expandedCryptoLesson(spec: CryptoLessonSpec, courseId = "crypto-basics"): LessonRecord {
   const questions = spec.questions.map((item, index) => {
     const quizQuestion = question(item.id, item.text, item.correct, item.wrong, item.explanation);
-    if (courseId !== "blockchain") return quizQuestion;
-
     const correctIndex = (spec.order + index) % quizQuestion.options.length;
     const [correctOption, ...wrongOptions] = quizQuestion.options;
     const options = [...wrongOptions];
@@ -189,7 +195,22 @@ function expandedLawLesson(spec: CryptoLessonSpec): LessonRecord {
     "цифровая валюта", "цифровой валюты", "цифровой валюте", "цифровую валюту", "цифровой валютой", "цифровых валют",
     "ЦФА", "цифровой рубль", "цифрового рубля", "цифровому рублю", "цифровым рублём",
     "Банк России", "Банка России", "ФНС", "Федеральный закон № 282-ФЗ",
+    "налоговый результат", "подтверждённые расходы", "доход", "декларация", "реестр", "майнинг",
+    "дата вступления в силу", "переходные положения", "юридическое лицо", "правовой статус",
   ];
+  const formatLawPage = (page: CryptoLessonPageSpec) => {
+    const structured = page.body.split("\n\n").map(paragraph => {
+      if (/^Пример:/.test(paragraph) || page.sectionType === "KEY_TAKEAWAY") return `> ${paragraph}`;
+      return paragraph;
+    }).join("\n\n");
+    return formatSourceLessonBody(structured, lawEmphasisTerms)
+      .replace(/pravo\.gov\.ru/g, "[pravo.gov.ru](https://pravo.gov.ru/)")
+      .replace(/cbr\.ru/g, "[cbr.ru](https://www.cbr.ru/)")
+      .replace(/nalog\.gov\.ru/g, "[nalog.gov.ru](https://www.nalog.gov.ru/)")
+      .replace(/(?:\*\*)?(Федеральный закон № 282-ФЗ|закон № 282-ФЗ)(?:\*\*)?/g, "[$1](https://publication.pravo.gov.ru/document/0001202608040007)")
+      .replace(/(?:\*\*)?(ФНС)(?:\*\*)?/g, `[$1](https://www.nalog.gov.ru/${spec.id === "law-mining" ? "mining/" : ""})`)
+      .replace(/(?:\*\*)?(Банк России|Банка России|Банком России)(?:\*\*)?/g, `[$1](https://www.cbr.ru/${spec.id === "law-payments" ? "faq/dr/" : ""})`);
+  };
   return {
     id: spec.id,
     courseId: "law-russia",
@@ -198,8 +219,8 @@ function expandedLawLesson(spec: CryptoLessonSpec): LessonRecord {
     shortDescription: spec.shortDescription,
     durationMinutes: spec.durationMinutes,
     robotTip: spec.robotTip,
-    sections: spec.pages.map((page) => ({ type: page.sectionType, title: page.title, body: formatSourceLessonBody(page.body, lawEmphasisTerms) })),
-    detailedPages: spec.pages.map((page) => ({ ...page, body: formatSourceLessonBody(page.body, lawEmphasisTerms) })),
+    sections: spec.pages.map((page) => ({ type: page.sectionType, title: page.title, body: formatLawPage(page) })),
+    detailedPages: spec.pages.map((page) => ({ ...page, body: formatLawPage(page) })),
     checkpointAfter: spec.checkpointAfter,
     quiz: { id: `quiz-${spec.id}`, title: `Итоговый тест: ${spec.title}`, questions },
   };
