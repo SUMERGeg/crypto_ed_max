@@ -363,7 +363,9 @@ a { color: inherit; text-decoration: none; }
 .lesson-flow-hero p { margin: 0; color: #9fb3d2; font-size: 11px; line-height: 1.45; }
 .lesson-flow-hero img { position: absolute; right: -19px; bottom: -58px; width: 162px; height: 222px; object-fit: contain; filter: drop-shadow(0 12px 20px rgba(0,0,0,.3)); }
 .lesson-page-card,.lesson-checkpoint { min-height: 352px; padding: 22px 18px; border: 1px solid #e2e6ee; border-radius: 20px; background: #fff; box-shadow: 0 12px 30px rgba(49,63,93,.07); }
-.lesson-page-card__icon { display: grid; place-items: center; width: 43px; height: 43px; margin-bottom: 23px; color: #6759e4; border-radius: 14px; background: #e9e6ff; }
+.lesson-page-card__icon { display: grid; place-items: center; width: 43px; height: 43px; flex: none; color: #6759e4; border-radius: 14px; background: #e9e6ff; }
+.lesson-page-card__heading { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.lesson-page-card .lesson-page-card__heading h2 { min-width: 0; margin: 0; overflow-wrap: anywhere; }
 .lesson-page-card__eyebrow { color: #685ae5; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .065em; }
 .lesson-page-card h2,.lesson-checkpoint h2 { margin: 8px 0 14px; font-size: 19px; line-height: 1.25; letter-spacing: -.025em; }
 .lesson-page-card__illustration { margin: 0 0 16px; overflow: hidden; border: 1px solid #dde4f1; border-radius: 16px; background: #eef3ff; box-shadow: 0 8px 22px rgba(54,70,112,.1); }
