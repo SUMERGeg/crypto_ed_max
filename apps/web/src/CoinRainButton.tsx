@@ -1,9 +1,10 @@
 import { Bitcoin, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
+import { coinFallTiming } from "./coin-flight";
 
 const COIN_COUNT = 18;
-const EFFECT_DURATION_MS = 2600;
+const EFFECT_DURATION_MS = 2100;
 
 type CoinParticle = {
   id: number;
@@ -21,10 +22,6 @@ type CoinBurst = {
   y: number;
   coins: CoinParticle[];
 };
-
-function verticalOffset(coin: CoinParticle, progress: number) {
-  return coin.velocity * progress + (coin.fall - coin.velocity) * progress * progress;
-}
 
 export function CoinRainButton() {
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -63,7 +60,7 @@ export function CoinRainButton() {
         dx: targetX - x,
         velocity,
         fall: shellRect.height - y + 40 + Math.random() * 60,
-        duration: 1650 + Math.random() * 650,
+        duration: 1350 + Math.random() * 500,
         delay: Math.random() * 150,
         spin: (Math.random() < .5 ? -1 : 1) * (1 + Math.random() * 1.5),
       };
@@ -86,27 +83,20 @@ export function CoinRainButton() {
       {bursts.length > 0 && shell && createPortal(
         <div className="coin-rain" aria-hidden="true">
           {bursts.flatMap((burst) => burst.coins.map((coin) => <span
-              className="coin-rain__coin"
+              className="coin-rain__flight"
               key={`${burst.id}-${coin.id}`}
               style={{
                 left: burst.x,
                 top: burst.y,
-                animationDelay: `${coin.delay}ms`,
-                animationDuration: `${coin.duration}ms`,
-                "--coin-x-20": `${coin.dx * .2}px`,
-                "--coin-y-20": `${verticalOffset(coin, .2)}px`,
-                "--coin-x-40": `${coin.dx * .4}px`,
-                "--coin-y-40": `${verticalOffset(coin, .4)}px`,
-                "--coin-x-60": `${coin.dx * .6}px`,
-                "--coin-y-60": `${verticalOffset(coin, .6)}px`,
-                "--coin-x-80": `${coin.dx * .8}px`,
-                "--coin-y-80": `${verticalOffset(coin, .8)}px`,
+                "--coin-delay": `${coin.delay}ms`,
+                "--coin-duration": `${coin.duration}ms`,
                 "--coin-x": `${coin.dx}px`,
                 "--coin-fall": `${coin.fall}px`,
+                "--coin-fall-easing": coinFallTiming(coin.velocity, coin.fall).css,
                 "--coin-spin": `${coin.spin}turn`,
               } as CSSProperties}
             >
-              <Bitcoin size={18} strokeWidth={2.7} />
+              <span className="coin-rain__coin"><Bitcoin size={18} strokeWidth={2.7} /></span>
             </span>))}
         </div>,
         shell,
