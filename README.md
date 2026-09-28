@@ -112,6 +112,24 @@ npm run dev
 
 Для проверки после развёртывания отправьте боту `/start`, затем `/route` и `/progress`, проверьте переходы кнопок. Без токена и публичного HTTPS-адреса локально подключение к MAX не выполняется.
 
+## Проверка собственного API
+
+Полное описание методов и схем: [OpenAPI 3.0.3](documentation/openapi.yaml). Последовательность проверок, роли, параметры, ожидаемые ответы и встроенные тестовые данные: [DATA-API.yaml](documentation/DATA-API.yaml). Публичный HTTPS-адрес API — `https://crypto-max.onrender.com/api/v1`. Он работает параллельно с ботом MAX; сервис на бесплатном тарифе Render может просыпаться после простоя.
+
+Для API-проверки не нужен аккаунт MAX или общий тестовый пароль: публичный `POST /auth/guest` создаёт **отдельного** гостя и возвращает подписанную сессию. Например, в PowerShell:
+
+```powershell
+$apiBase = 'https://crypto-max.onrender.com/api/v1'
+Invoke-RestMethod "$apiBase/health"
+$testSession = Invoke-RestMethod -Method Post "$apiBase/auth/guest" -ContentType 'application/json' -Body '{}'
+$testHeaders = @{ Authorization = "Bearer $($testSession.accessToken)" }
+Invoke-RestMethod "$apiBase/courses" -Headers $testHeaders
+Invoke-RestMethod "$apiBase/route" -Headers $testHeaders
+Invoke-RestMethod "$apiBase/career" -Headers $testHeaders
+```
+
+Сохраняй `$testSession` только в своей консоли: её `accessToken` даёт доступ к прогрессу созданного гостя. Для повторного входа передай этот Bearer в `POST /auth/guest`; без него создастся новый пользователь с пустым прогрессом. В Git не хранятся рабочие токены, пароли или статические тестовые учётные записи. В Docker-демо на `localhost:4100` Bearer не нужен, а `/auth/guest` не настроен.
+
 ## Проверки
 
 ```powershell

@@ -1,0 +1,200 @@
+# Сценарий воспроизводимой проверки собственного API КриптоКласса.
+# Описание всех операций и схем ответов: openapi.yaml (OpenAPI 3.0.3).
+version: 1
+solution: КриптоКласс
+team: Хакатон MAX 620
+baseUrl: https://crypto-max.onrender.com/api/v1
+openapi: openapi.yaml
+botUrl: https://max.ru/t620_hakaton_max_bot
+
+access:
+  transport: HTTPS
+  roles:
+    public: Без сессии; только проверка сервиса и выдача собственной гостевой сессии.
+    guest: Отдельный учебный пользователь, созданный через POST /auth/guest.
+    max_user: Пользователь MAX; вход через POST /auth/max с подписанным initData из мини-приложения.
+    max_webhook: Служебный вызов от MAX; секрет webhook не выдаётся проверяющим.
+  testAccount:
+    role: guest
+    create:
+      method: POST
+      path: /auth/guest
+      body: {}
+      expectedStatus: 200
+      tokenField: accessToken
+      userIdPrefix: 'guest:'
+    subsequentRequests:
+      header: 'Authorization: Bearer <accessToken>'
+      note: Токен берётся из ответа create, хранится только у проверяющего и не записан в репозитории.
+    persistence: >-
+      Запросы с одним accessToken используют один гостевой профиль. Повторный POST /auth/guest
+      с этим Bearer продлевает сессию; без него создаёт нового гостя с пустым прогрессом.
+  productionNote: >-
+    Все учебные действия используют виртуальные данные. В локальном Docker-демо
+    пользовательские методы работают без Bearer, а POST /auth/guest возвращает 503.
+
+testData:
+  courseId: crypto-basics
+  lessonId: crypto-intro
+  caseId: fake-support-seed
+  safeCaseOptionId: refuse-and-verify
+  scenarioId: global-shock-2020
+  roleId: blockchain-developer
+  marketSymbol: BTC
+  note: >-
+    Курсы, уроки, кейсы, роли и исторические сценарии уже входят в приложение;
+    отдельный импорт или реальные денежные операции не требуются.
+
+checks:
+  - id: health
+    role: public
+    method: GET
+    path: /health
+    expectedStatus: 200
+    expectedResponse: { format: application/json, fields: { status: ok, service: crypto-education-api } }
+
+  - id: auth-mode
+    role: public
+    method: GET
+    path: /auth/config
+    expectedStatus: 200
+    expectedResponse: { format: application/json, fields: { maxRequired: true } }
+
+  - id: guest-session
+    role: public
+    method: POST
+    path: /auth/guest
+    body: {}
+    expectedStatus: 200
+    expectedResponse:
+      format: application/json
+      fields: { accessToken: '<opaque server-signed token>', user.id: 'guest:<uuid>', user.displayName: Гость }
+    save: { accessToken: accessToken }
+
+  - id: courses
+    role: guest
+    method: GET
+    path: /courses
+    expectedStatus: 200
+    expectedResponse: { format: application/json, arrayLength: 4, itemFields: [id, title, lessonCount, progress] }
+
+  - id: lesson
+    role: guest
+    method: GET
+    path: /lessons/crypto-intro
+    parameters: { courseId: crypto-basics, lessonId: crypto-intro }
+    expectedStatus: 200
+    expectedResponse: { format: application/json, fields: { id: crypto-intro, courseId: crypto-basics, pageCount: 10 } }
+
+  - id: route
+    role: guest
+    method: GET
+    path: /route
+    expectedStatus: 200
+    expectedResponse: { format: application/json, fields: { version: 1, total: 30, currentIndex: 0 }, stopFields: [id, type, contentId, completed, available] }
+    note: currentIndex=0 только у нового гостя без завершённых шагов.
+
+  - id: route-view
+    role: guest
+    method: POST
+    path: /route/view
+    expectedStatus: 204
+    expectedResponse: { format: empty }
+    verifyWith: GET /home -> routeViewed=true
+
+  - id: onboarding-read
+    role: guest
+    method: GET
+    path: /onboarding
+    expectedStatus: 200
+    expectedResponse: { format: application/json, fields: { status: NOT_STARTED, step: 1 } }
+    note: Статус и шаг приведены для нового гостя.
+
+  - id: onboarding-save
+    role: guest
+    method: POST
+    path: /onboarding
+    body: { status: IN_PROGRESS, step: 2 }
+    expectedStatus: 200
+    expectedResponse: { format: application/json, fields: { status: IN_PROGRESS, step: 2 } }
+
+  - id: career-overview
+    role: guest
+    method: GET
+    path: /career
+    expectedStatus: 200
+    expectedResponse: { format: application/json, fields: { questionCount: 40, roleCount: 10 } }
+
+  - id: career-role
+    role: guest
+    method: GET
+    path: /career/roles/blockchain-developer
+    parameters: { roleId: blockchain-developer }
+    expectedStatus: 200
+    expectedResponse: { format: application/json, fields: { id: blockchain-developer, title: '<string>' } }
+
+  - id: security-case
+    role: guest
+    method: GET
+    path: /security/cases/fake-support-seed
+    parameters: { caseId: fake-support-seed }
+    expectedStatus: 200
+    expectedResponse: { format: application/json, fields: { id: fake-support-seed }, itemFields: [options.id, options.text] }
+
+  - id: security-answer
+    role: guest
+    method: POST
+    path: /security/cases/fake-support-seed/submit
+    parameters: { caseId: fake-support-seed }
+    body: { optionId: refuse-and-verify }
+    expectedStatus: 200
+    expectedResponse: { format: application/json, fields: { caseId: fake-support-seed, safetyLevel: SAFE, completed: true } }
+
+  - id: scenarios
+    role: guest
+    method: GET
+    path: /scenarios
+    expectedStatus: 200
+    expectedResponse: { format: application/json, arrayLength: 5, itemFields: [id, title, startingBalanceRub] }
+
+  - id: simulation-create
+    role: guest
+    method: POST
+    path: /simulations
+    body: { scenarioId: global-shock-2020 }
+    expectedStatus: 201
+    expectedResponse: { format: application/json, fields: { scenarioId: global-shock-2020, status: ACTIVE, startingBalanceRub: 100000 } }
+    save: { sessionId: sessionId }
+
+  - id: simulation-pause
+    role: guest
+    method: POST
+    path: /simulations/{sessionId}/pause
+    parameters: { sessionId: '<saved sessionId>' }
+    expectedStatus: 200
+    expectedResponse: { format: application/json, fields: { status: PAUSED } }
+
+  - id: simulation-resume
+    role: guest
+    method: POST
+    path: /simulations/{sessionId}/resume
+    parameters: { sessionId: '<saved sessionId>' }
+    expectedStatus: 200
+    expectedResponse: { format: application/json, fields: { status: ACTIVE } }
+
+  - id: market-detail
+    role: guest
+    method: GET
+    path: /market/assets/BTC
+    parameters: { symbol: BTC, period: 1W }
+    expectedStatus: 200
+    expectedResponse: { format: application/json, fields: { symbol: BTC, isStale: '<boolean>', series: '<array>' } }
+    note: Внешний источник может быть недоступен; API явно помечает устаревшие данные.
+
+  - id: bearer-required
+    role: public
+    method: GET
+    path: /route
+    expectedStatus: 401
+    expectedResponse: { format: application/json, fields: { message: '<string>' } }
+    note: Выполнить без заголовка Authorization на опубликованном HTTPS-сервисе.
