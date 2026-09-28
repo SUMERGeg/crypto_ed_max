@@ -121,11 +121,11 @@ export function PracticePage() {
   return (
     <div className="page page--light practice-page">
       <header className="practice-header">
-        <div><span className="eyebrow">Исторический симулятор</span><h1>Практика без риска</h1><p>Принимай решения в прошлом, не зная будущих цен.</p></div>
+        <div><span className="eyebrow">Исторический симулятор</span><h1>Проверь себя на тестовом рынке</h1><p>Исторические сценарии, твои решения и их последствия.</p></div>
         <img src={robotAssets.thinking} alt="Крипто-помощник размышляет" />
       </header>
 
-      <div className="practice-rule"><ShieldCheck size={18} /><span><strong>Это учебная среда</strong><small>Только виртуальные деньги. Никаких реальных покупок.</small></span></div>
+      <div className="practice-rule"><ShieldCheck size={18} /><span><strong>Это учебная среда</strong><small>Виртуальные деньги, без реальных покупок. Дни идут по порядку: новости открываются в свою дату, будущие цены скрыты.</small></span></div>
       <RouteNextStep />
 
       <div className="scenario-heading"><div><span>Доступные сценарии</span><h2>Выбери исторический период</h2></div><strong>{scenarios?.length ?? 1}</strong></div>
@@ -133,10 +133,6 @@ export function PracticePage() {
         <SimulationListSkeleton />
       ) : scenarios.map((scenario) => <ScenarioCard key={scenario.id} scenario={scenario} />)}
 
-      <aside className="robot-tip">
-        <img src={robotAssets.teaching} alt="" aria-hidden="true" />
-        <div><span>Как это работает</span><p>Исторические дни идут постепенно. Новости открываются только после своей даты, а будущее остаётся скрытым.</p></div>
-      </aside>
     </div>
   );
 }
