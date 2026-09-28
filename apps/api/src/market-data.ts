@@ -43,7 +43,7 @@ const assets: AssetConfig[] = [
   { symbol: "BTC", name: "Bitcoin", coinGeckoId: "bitcoin", binanceSymbol: "BTCUSDT", okxSymbol: "BTC-USDT", accent: "#f5a13a", description: "Первая и крупнейшая по капитализации криптовалюта с заранее ограниченным выпуском.", fallbackPriceRub: 8_432_000, fallbackChange: 2.4 },
   { symbol: "ETH", name: "Ethereum", coinGeckoId: "ethereum", binanceSymbol: "ETHUSDT", okxSymbol: "ETH-USDT", accent: "#718bd5", description: "Актив сети Ethereum, в которой работают смарт-контракты и децентрализованные приложения.", fallbackPriceRub: 312_000, fallbackChange: 1.8 },
   { symbol: "SOL", name: "Solana", coinGeckoId: "solana", binanceSymbol: "SOLUSDT", okxSymbol: "SOL-USDT", accent: "#7354e8", description: "Актив сети Solana, рассчитанной на большое число быстрых и недорогих операций.", fallbackPriceRub: 14_800, fallbackChange: -0.6 },
-  { symbol: "TON", name: "Toncoin", coinGeckoId: "the-open-network", binanceSymbol: "TONUSDT", okxSymbol: "TON-USDT", accent: "#2f9bea", description: "Основной актив сети TON, используемый для комиссий и работы приложений внутри экосистемы.", fallbackPriceRub: 520, fallbackChange: 3.1 },
+  { symbol: "XRP", name: "XRP", coinGeckoId: "ripple", binanceSymbol: "XRPUSDT", okxSymbol: "XRP-USDT", accent: "#334a71", description: "Актив сети XRP Ledger, используемый для переводов и оплаты комиссий.", fallbackPriceRub: 180, fallbackChange: 0.4 },
   { symbol: "LTC", name: "Litecoin", coinGeckoId: "litecoin", binanceSymbol: "LTCUSDT", okxSymbol: "LTC-USDT", accent: "#608bd3", description: "Криптовалюта для переводов, созданная на основе идей Bitcoin с более коротким временем блока.", fallbackPriceRub: 7_210, fallbackChange: 0.7 },
 ];
 

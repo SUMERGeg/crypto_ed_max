@@ -626,7 +626,7 @@ export const market = {
   assets: [
     { symbol: "BTC", name: "Bitcoin", priceRub: 8_432_000, change24hPercent: 2.4, isStale: false },
     { symbol: "ETH", name: "Ethereum", priceRub: 312_000, change24hPercent: 1.8, isStale: false },
-    { symbol: "TON", name: "Toncoin", priceRub: 520, change24hPercent: 3.1, isStale: false },
+    { symbol: "XRP", name: "XRP", priceRub: 180, change24hPercent: 0.4, isStale: false },
   ],
   isStale: false,
   source: "Demo market cache",
