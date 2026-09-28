@@ -194,7 +194,7 @@ function HomePage() {
     <div className="page page--home">
       <header className="home-header">
         <div>
-          <span className="eyebrow eyebrow--dark">Твой учебный маршрут</span>
+          <span className="eyebrow eyebrow--dark">Майним знания, а не монеты</span>
           <h1>Привет, {data.user.displayName}! <span aria-hidden="true">👋</span></h1>
         </div>
         <NavLink className="icon-button icon-button--dark" to="/profile" aria-label="Открыть профиль">
