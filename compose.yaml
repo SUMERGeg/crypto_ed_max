@@ -1,4 +1,24 @@
 services:
+  app:
+    build: .
+    ports:
+      - "127.0.0.1:4100:4100"
+    environment:
+      PORT: "4100"
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: postgresql://crypto:crypto_dev_only@db:5432/crypto_education
+      MAX_BOT_TOKEN: ${MAX_BOT_TOKEN:-}
+      MAX_BOT_PUBLIC_URL: ${MAX_BOT_PUBLIC_URL:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4100/api/v1/health').then(response => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      start_period: 15s
+      retries: 12
+
   db:
     image: postgres:17-alpine
     environment:
@@ -6,7 +26,7 @@ services:
       POSTGRES_USER: crypto
       POSTGRES_PASSWORD: crypto_dev_only
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - crypto_education_pgdata:/var/lib/postgresql/data
     healthcheck:
