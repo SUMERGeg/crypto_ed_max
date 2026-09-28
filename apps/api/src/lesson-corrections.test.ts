@@ -20,14 +20,20 @@ test("Bitcoin repeated screen is removed without shifting artwork", () => {
   assert.equal(pages[6]!.eyebrow, "Шаг 7");
   assert.match(pages[6]!.illustration!.src, /screen-08.webp$/);
 });
-test("crypto quizzes distribute answers and keep options comparable in length", () => {
-  for (const lesson of lessons.filter(l => l.courseId === "crypto-basics")) {
+test("lesson quizzes distribute correct answers across positions", () => {
+  for (const lesson of lessons) {
     const positions = lesson.quiz.questions.map(q => q.options.findIndex(o => o.isCorrect));
-    assert.equal(new Set(positions).size, 3);
+    assert.equal(new Set(positions).size, 3, lesson.id);
+    for (const question of lesson.quiz.questions) {
+      assert.equal(question.options.filter(o => o.isCorrect).length, 1);
+    }
+  }
+});
+test("crypto quiz options remain comparable in length", () => {
+  for (const lesson of lessons.filter(l => l.courseId === "crypto-basics")) {
     for (const question of lesson.quiz.questions) {
       const lengths = question.options.map(o => o.text.length);
       assert.ok(Math.max(...lengths) / Math.min(...lengths) < 2, question.id);
-      assert.equal(question.options.filter(o => o.isCorrect).length, 1);
     }
   }
 });

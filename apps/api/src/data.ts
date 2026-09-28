@@ -73,6 +73,14 @@ function question(id: string, text: string, correct: string, wrong: [string, str
   };
 }
 
+function distributeCorrectAnswer(quizQuestion: QuizQuestion, lessonOrder: number, questionIndex: number): QuizQuestion {
+  const correctIndex = (lessonOrder + questionIndex) % quizQuestion.options.length;
+  const [correctOption, ...wrongOptions] = quizQuestion.options;
+  const options = [...wrongOptions];
+  options.splice(correctIndex, 0, correctOption!);
+  return { ...quizQuestion, options };
+}
+
 function lesson(
   id: string,
   courseId: string,
@@ -167,14 +175,8 @@ export function formatSourceLessonBody(body: string, extraEmphasisTerms: readonl
 }
 
 function expandedCryptoLesson(spec: CryptoLessonSpec, courseId = "crypto-basics"): LessonRecord {
-  const questions = spec.questions.map((item, index) => {
-    const quizQuestion = question(item.id, item.text, item.correct, item.wrong, item.explanation);
-    const correctIndex = (spec.order + index) % quizQuestion.options.length;
-    const [correctOption, ...wrongOptions] = quizQuestion.options;
-    const options = [...wrongOptions];
-    options.splice(correctIndex, 0, correctOption!);
-    return { ...quizQuestion, options };
-  });
+  const questions = spec.questions.map((item, index) =>
+    distributeCorrectAnswer(question(item.id, item.text, item.correct, item.wrong, item.explanation), spec.order, index));
   return {
     id: spec.id,
     courseId,
@@ -191,7 +193,8 @@ function expandedCryptoLesson(spec: CryptoLessonSpec, courseId = "crypto-basics"
 }
 
 function expandedLawLesson(spec: CryptoLessonSpec): LessonRecord {
-  const questions = spec.questions.map((item) => question(item.id, item.text, item.correct, item.wrong, item.explanation));
+  const questions = spec.questions.map((item, index) =>
+    distributeCorrectAnswer(question(item.id, item.text, item.correct, item.wrong, item.explanation), spec.order, index));
   const lawEmphasisTerms = [
     "цифровая валюта", "цифровой валюты", "цифровой валюте", "цифровую валюту", "цифровой валютой", "цифровых валют",
     "ЦФА", "цифровой рубль", "цифрового рубля", "цифровому рублю", "цифровым рублём",
@@ -225,7 +228,8 @@ function expandedLawLesson(spec: CryptoLessonSpec): LessonRecord {
 }
 
 function expandedFinanceLesson(spec: FinanceLessonSpec): LessonRecord {
-  const questions = spec.questions.map((item) => question(item.id, item.text, item.correct, item.wrong, item.explanation));
+  const questions = spec.questions.map((item, index) =>
+    distributeCorrectAnswer(question(item.id, item.text, item.correct, item.wrong, item.explanation), spec.order, index));
   return {
     id: spec.id,
     courseId: "finance",
