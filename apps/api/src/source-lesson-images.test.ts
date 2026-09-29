@@ -1,17 +1,23 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import test from "node:test";
 import { sourceBlockchainLessonSpecs, sourceCryptoLessonSpecs } from "./source-lessons.js";
 
-function expectedImageSources(folder: "source-crypto" | "source-blockchain", specs: typeof sourceCryptoLessonSpecs) {
-  return specs.flatMap((lesson, lessonIndex) => lesson.pages.map((_, pageIndex) =>
-    `/assets/lessons/${folder}/lesson-${String(lessonIndex + 1).padStart(2, "0")}-screen-${String(pageIndex + 1).padStart(2, "0")}.webp`,
-  ));
-}
-
-test("source lessons map every page to its generated illustration", () => {
-  const cryptoImages = sourceCryptoLessonSpecs.flatMap((lesson) => lesson.pages.map((page) => page.illustration?.src));
-  const blockchainImages = sourceBlockchainLessonSpecs.flatMap((lesson) => lesson.pages.map((page) => page.illustration?.src));
-
-  assert.deepEqual(cryptoImages, expectedImageSources("source-crypto", sourceCryptoLessonSpecs));
-  assert.deepEqual(blockchainImages, expectedImageSources("source-blockchain", sourceBlockchainLessonSpecs));
+test("every source lesson page points to an existing, distinct illustration", () => {
+  for (const [folder, lessons] of [
+    ["source-crypto", sourceCryptoLessonSpecs],
+    ["source-blockchain", sourceBlockchainLessonSpecs],
+  ] as const) {
+    const seen = new Set<string>();
+    for (const lesson of lessons) {
+      for (const page of lesson.pages) {
+        const src = page.illustration?.src;
+        assert.ok(src, `Missing illustration for ${lesson.id}`);
+        assert.ok(src.startsWith(`/assets/lessons/${folder}/`), `Wrong illustration folder: ${src}`);
+        assert.ok(!seen.has(src), `Duplicate illustration: ${src}`);
+        seen.add(src);
+        assert.ok(existsSync(new URL(`../../web/public${src}`, import.meta.url)), `Missing image file: ${src}`);
+      }
+    }
+  }
 });

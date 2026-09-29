@@ -6,7 +6,7 @@ import { buildRecommendedRoute } from "./route-data.js";
 import type { AppUser } from "./max-auth.js";
 
 export const botCommands = [
-  { name: "start", description: "Открыть КриптоКласс" },
+  { name: "start", description: "Открыть Finspace" },
   { name: "route", description: "Мой учебный маршрут" },
   { name: "progress", description: "Мой прогресс" },
   { name: "help", description: "Помощь и команды" },
@@ -38,11 +38,11 @@ export function buildBotReply(command: string, state: State, botId: number, botU
     text = `Твой прогресс\n\nУроки: ${count("LESSON")} из 20\nКейсы безопасности: ${count("SECURITY_CASE")} из 5\nИсторические сценарии: ${count("REPLAY")} из 5\nМаршрут: ${route.completedCount} из ${route.total} остановок.`;
     buttons = [button("Мой профиль", "profile"), button("Продолжить маршрут", state.routeViewed ? nextPayload : "route")];
   } else if (command === "/start") {
-    text = "Привет! Это КриптоКласс — учимся понимать криптовалюты, распознавать мошенничество и принимать решения без риска для реальных денег.\n\nОткрой приложение или выбери свой маршрут.";
-    buttons = [button("Открыть КриптоКласс", "home"), button("Мой маршрут", "route"), button("Мой прогресс", "profile")];
+    text = "Привет! Это Finspace — учимся понимать криптовалюты, распознавать мошенничество и принимать решения без риска для реальных денег.\n\nОткрой приложение или выбери свой маршрут.";
+    buttons = [button("Открыть Finspace", "home"), button("Мой маршрут", "route"), button("Мой прогресс", "profile")];
   } else {
-    text = "Команды КриптоКласса\n\n/start — открыть приложение\n/route — маршрут и следующий шаг\n/progress — твой прогресс\n/help — эта справка\n\nОбучение и практика проходят в мини-приложении. Только виртуальные деньги, никаких реальных покупок.";
-    buttons = [button("Открыть КриптоКласс", "home"), button("Мой маршрут", "route")];
+    text = "Команды Finspace\n\n/start — открыть приложение\n/route — маршрут и следующий шаг\n/progress — твой прогресс\n/help — эта справка\n\nОбучение и практика проходят в мини-приложении. Только виртуальные деньги, никаких реальных покупок.";
+    buttons = [button("Открыть Finspace", "home"), button("Мой маршрут", "route")];
   }
   return { text, attachments: [{ type: "inline_keyboard", payload: { buttons } }] };
 }

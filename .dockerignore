@@ -11,3 +11,8 @@ dist
 *.tsbuildinfo
 tmp
 documentation
+.presentation-*
+AGENTS.md
+SKILLS_README.md
+apps/web/public/assets/lessons/financial-basics/*.png
+apps/web/public/assets/lessons/russia-law/law-*.webp

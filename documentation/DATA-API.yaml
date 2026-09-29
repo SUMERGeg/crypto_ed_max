@@ -1,7 +1,7 @@
-# Сценарий воспроизводимой проверки собственного API КриптоКласса.
+# Сценарий воспроизводимой проверки собственного API Finspace.
 # Описание всех операций и схем ответов: openapi.yaml (OpenAPI 3.0.3).
 version: 1
-solution: КриптоКласс
+solution: Finspace
 team: Хакатон MAX 620
 baseUrl: https://crypto-max.onrender.com/api/v1
 openapi: openapi.yaml

@@ -9,3 +9,20 @@ dist/
 tmp/
 vite.config.js
 vite.config.d.ts
+преза.md
+
+# Local agent configuration and presentation drafts
+/.agents/
+/.codex/
+/AGENTS.md
+/SKILLS_README.md
+/.presentation-*/
+/documentation/Hackathon_Solution_Key_Theses.md
+/documentation/presentation-assets/
+/documentation/presentation-design-variants/
+/documentation/presentation-output/*.pptx
+/documentation/visual-review/
+
+# Original or unused lesson image drafts; the app uses the WebP step images
+/apps/web/public/assets/lessons/financial-basics/*.png
+/apps/web/public/assets/lessons/russia-law/law-*.webp

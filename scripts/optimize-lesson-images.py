@@ -22,4 +22,7 @@ for source in sorted(assets.rglob("*.webp")):
 (root / "apps/web/src/lesson-image-dimensions.json").write_text(
     json.dumps(dimensions, indent=2) + "\n", encoding="utf-8"
 )
-print(f"Finance illustrations: {before:,} -> {after:,} bytes ({(1-after/before)*100:.1f}% smaller)")
+if before:
+    print(f"Finance illustrations: {before:,} -> {after:,} bytes ({(1-after/before)*100:.1f}% smaller)")
+else:
+    print("No PNG sources found; WebP dimensions refreshed")

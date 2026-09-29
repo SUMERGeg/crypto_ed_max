@@ -42,8 +42,8 @@ export function MaxEntry({ children }: { children: ReactNode }) {
   }, []);
 
   if (state === "ready") return children;
-  const message = state === "loading" ? "Открываем КриптоКласс…"
-    : state === "max-required" ? "Открой КриптоКласс через бота в MAX, чтобы сохранить свой прогресс."
+  const message = state === "loading" ? "Открываем Finspace…"
+    : state === "max-required" ? "Открой Finspace через бота в MAX, чтобы сохранить свой прогресс."
       : "Не удалось войти через MAX. Закрой мини-приложение и открой его из бота снова.";
-  return <main className="max-entry"><div className="max-entry__card"><h1>КриптоКласс</h1><p>{message}</p></div></main>;
+  return <main className="max-entry"><div className="max-entry__card"><h1>Finspace</h1><p>{message}</p></div></main>;
 }

@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: КриптоКласс API
+  title: Finspace API
   version: 0.1.0
   description: >-
     REST API мини-приложения MAX. В опубликованном окружении пользовательские
